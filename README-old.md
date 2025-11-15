@@ -327,7 +327,7 @@ const MyNav: React.FC<{ items: BottomNavItem[] }> = ({ items }) => {
 
 ## 📄 **License**
 
-MIT © [Your Name]
+MIT © [maibunheng]
 
 ## 🚀 **Changelog**
 
