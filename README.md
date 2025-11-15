@@ -751,7 +751,7 @@ Perfect integration with React Router for single-page applications:
 
 ```jsx
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { BottomNav } from "react-bottom-nav-mini-app";
+import { BottomNav, BottomNavItem } from "react-bottom-nav-mini-app";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -760,16 +760,21 @@ function AppContent() {
   // Determine active tab based on current route
   const getActiveTab = () => {
     switch (location.pathname) {
-      case "/": return "home";
-      case "/booking": return "booking";
-      case "/faq": return "faq";
-      case "/profile": return "profile";
-      default: return "home";
+      case "/":
+        return "home";
+      case "/booking":
+        return "booking";
+      case "/faq":
+        return "faq";
+      case "/profile":
+        return "profile";
+      default:
+        return "home";
     }
   };
 
   // Navigation items with route property (extensible interface)
-  const navItems = [
+  const navItems: BottomNavItem[] = [
     {
       id: "home",
       label: "Home",
@@ -789,10 +794,27 @@ function AppContent() {
       badge: "3",
       route: "/booking", // Custom property
     },
-    // ... more items
+    {
+      id: "faq",
+      label: "FAQ",
+      icon: "/faq.svg",
+      activeIcon: "/afaq.svg",
+      iconColor: "#4C4C4C",
+      activeIconColor: "#6F5D29",
+      route: "/faq",
+    },
+    {
+      id: "profile",
+      label: "Profile",
+      icon: "/profile.svg",
+      iconColor: "#4C4C4C",
+      activeIconColor: "#6F5D29",
+      activeIcon: "/aprofile.svg",
+      route: "/profile",
+    },
   ];
 
-  const handleNavClick = (item) => {
+  const handleNavClick = (item: BottomNavItem) => {
     if (item.route) {
       navigate(item.route);
     }
@@ -804,7 +826,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/booking" element={<Booking />} />
-          {/* ... more routes */}
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>
 
