@@ -1,6 +1,6 @@
 {
   "name": "react-bottom-nav-mini-app",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "description": "A customizable and touch-friendly BottomNav component optimized for Mini Apps and mobile React applications",
   "main": "dist/index.js",
