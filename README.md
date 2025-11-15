@@ -30,6 +30,20 @@ A **highly customizable** and touch-friendly BottomNav component specifically de
 npm install react-bottom-nav-mini-app
 ```
 
+**Don't forget to import the CSS:**
+
+```css
+/* In your CSS file or index.css */
+@import 'react-bottom-nav-mini-app/dist/index.css';
+```
+
+**Or in your React component:**
+
+```jsx
+// In your main App.js or component file
+import 'react-bottom-nav-mini-app/dist/index.css';
+```
+
 ## 🎨 **Basic Usage**
 
 **Simple setup with great defaults:**
@@ -37,6 +51,7 @@ npm install react-bottom-nav-mini-app
 ```jsx
 import React, { useState } from 'react';
 import { BottomNav } from 'react-bottom-nav-mini-app';
+import 'react-bottom-nav-mini-app/dist/index.css'; // ✅ Import CSS
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -752,6 +767,7 @@ Perfect integration with React Router for single-page applications:
 ```jsx
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { BottomNav, BottomNavItem } from "react-bottom-nav-mini-app";
+import 'react-bottom-nav-mini-app/dist/index.css'; // ✅ Import CSS
 
 function AppContent() {
   const navigate = useNavigate();
@@ -930,6 +946,7 @@ function App() {
 
 ```typescript
 import { BottomNav, BottomNavProps, BottomNavItem } from 'react-bottom-nav-mini-app';
+import 'react-bottom-nav-mini-app/dist/index.css'; // ✅ Import CSS
 
 // Extended interface for React Router integration
 interface NavItemWithRoute extends BottomNavItem {

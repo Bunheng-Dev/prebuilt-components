@@ -31,12 +31,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/m_bunheng/react-bottom-nav-mini-app"
+    "url": "https://github.com/Bunheng-Dev/react-bottom-nav-package"
   },
   "bugs": {
-    "url": "https://github.com/m_bunheng/react-bottom-nav-mini-app/issues"
+    "url": "https://github.com/Bunheng-Dev/react-bottom-nav-package/issues"
   },
-  "homepage": "https://github.com/m_bunheng/react-bottom-nav-mini-app#readme",
+  "homepage": "https://github.com/Bunheng-Dev/react-bottom-nav-package#readme",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
