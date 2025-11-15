@@ -998,7 +998,7 @@ const navItemsWithRoutes: NavItemWithRoute[] = [
 
 ## 📄 **License**
 
-MIT © [Your Name]
+MIT © [maibunheng]
 
 ## 🚀 **Changelog**
 
