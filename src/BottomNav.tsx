@@ -20,7 +20,11 @@ export interface BottomNavItem {
   [key: string]: any;
 }
 
-export interface BottomNavProps {
+export interface NBottomNavProps {
+  /**
+   * Whether the component is visible
+   */
+  isShow?: boolean;
   /**
    * Array of navigation items
    */
@@ -255,7 +259,8 @@ const getBadgePosition = (position: string, offset?: any): React.CSSProperties =
   }
 };
 
-export const BottomNav: React.FC<BottomNavProps> = ({
+const NBottomNav: React.FC<NBottomNavProps> = ({
+  isShow = true,
   items,
   activeId,
   onItemClick,
@@ -291,6 +296,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   ...props
 }) => {
   const [clickedItem, setClickedItem] = React.useState<string | null>(null);
+  
+  // Hide component if isShow is false
+  if (!isShow) {
+    return null;
+  }
   
   const handleItemClick = (item: BottomNavItem) => {
     if (item.disabled) return;
@@ -521,3 +531,5 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     </>
   );
 };
+
+export default NBottomNav;

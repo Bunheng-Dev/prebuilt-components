@@ -1,0 +1,185 @@
+/* Splash Screen Component Styles */
+
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.splash-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 60px;
+}
+
+.splash-logo {
+  display: block;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+
+.splash-power-by {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #666666;
+  text-align: center;
+  opacity: 0.8;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+/* Logo Animations */
+.splash-logo-fadeIn {
+  animation: splash-fade-in var(--animation-duration, 1s) ease-out;
+}
+
+.splash-logo-slideUp {
+  animation: splash-slide-up var(--animation-duration, 1s) ease-out;
+}
+
+.splash-logo-bounce {
+  animation: splash-bounce var(--animation-duration, 1s) ease-out;
+}
+
+.splash-logo-none {
+  /* No animation */
+}
+
+/* Keyframe Animations */
+@keyframes splash-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes splash-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes splash-bounce {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .splash-logo-container {
+    margin-bottom: 50px;
+  }
+  
+  .splash-power-by {
+    bottom: 30px;
+    font-size: 12px;
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .splash-logo-container {
+    margin-bottom: 40px;
+  }
+  
+  .splash-power-by {
+    bottom: 25px;
+    font-size: 11px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .splash-screen {
+    background-color: #1a1a1a;
+  }
+  
+  .splash-power-by {
+    color: #cccccc;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .splash-logo {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .splash-logo-fadeIn,
+  .splash-logo-slideUp,
+  .splash-logo-bounce {
+    animation: none;
+  }
+}
+
+/* Focus and interaction states */
+.splash-screen:focus {
+  outline: none;
+}
+
+/* Smooth transitions */
+.splash-screen {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Loading state variations */
+.splash-screen.splash-loading {
+  cursor: wait;
+}
+
+.splash-screen.splash-interactive {
+  cursor: pointer;
+}

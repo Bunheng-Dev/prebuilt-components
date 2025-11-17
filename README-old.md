@@ -47,7 +47,7 @@ function App() {
     <div>
       {/* Your app content */}
       
-      <BottomNav
+      <NBottomNav
         items={navItems}
         activeId={activeTab}
         onItemClick={(item) => setActiveTab(item.id)}
@@ -78,7 +78,7 @@ function TelegramMiniApp() {
   ];
 
   return (
-    <BottomNav
+    <NBottomNav
       items={navItems}
       activeId={activeTab}
       onItemClick={(item) => {
@@ -131,7 +131,7 @@ function AppWithIcons() {
   ];
 
   return (
-    <BottomNav
+    <NBottomNav
       items={navItems}
       activeId={activeTab}
       onItemClick={(item) => setActiveTab(item.id)}
@@ -155,7 +155,7 @@ function MinimalNav() {
   ];
 
   return (
-    <BottomNav
+    <NBottomNav
       items={navItems}
       activeId={activeTab}
       onItemClick={(item) => setActiveTab(item.id)}
@@ -247,7 +247,7 @@ Override styles using CSS classes:
 
 ```jsx
 // Use Telegram's theme colors
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleNavigation}
@@ -261,7 +261,7 @@ Override styles using CSS classes:
 
 ```jsx
 // WeChat-optimized styling
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleNavigation}
@@ -305,7 +305,7 @@ import { BottomNav, BottomNavProps, BottomNavItem } from 'react-bottom-nav-mini-
 const MyNav: React.FC<{ items: BottomNavItem[] }> = ({ items }) => {
   // Full type safety and IntelliSense
   return (
-    <BottomNav
+    <NBottomNav
       items={items}
       activeId="home"
       onItemClick={(item) => {

@@ -1,6 +1,15 @@
-# React BottomNav for Mini Apps
+# React Prebuilt Components
 
-A **highly customizable** and touch-friendly BottomNav component specifically designed for Mini Apps, mobile React applications, and responsive web apps with **extensive styling options**.
+# React Prebuilt Components
+
+A modern, customizable React component library featuring **NBottomNav** for bottom navigation, **NLoadingComponent** for loading states, and **NSplashScreen** for Mini Apps.
+
+## 📦 **Components Included**
+
+- ✅ **NBottomNav** - Advanced bottom navigation with animations and customization
+- ✅ **NLoadingComponent** - Circular spinner with center logo support
+- ✅ **NSplashScreen** - Splash screen component for Mini Apps
+- 🔄 **More Components Coming** - Toast, Header, Modal, Card, and more!
 
 ## 🎯 **Perfect for Mini Apps**
 
@@ -27,21 +36,21 @@ A **highly customizable** and touch-friendly BottomNav component specifically de
 ## 📦 **Installation**
 
 ```bash
-npm install react-bottom-nav-mini-app
+npm install react-prebuilt-components
 ```
 
 **Don't forget to import the CSS:**
 
 ```css
 /* In your CSS file or index.css */
-@import 'react-bottom-nav-mini-app/dist/index.css';
+@import 'react-prebuilt-components/dist/index.css';
 ```
 
 **Or in your React component:**
 
 ```jsx
 // In your main App.js or component file
-import 'react-bottom-nav-mini-app/dist/index.css';
+import 'react-prebuilt-components/dist/index.css';
 ```
 
 ## 🎨 **Basic Usage**
@@ -50,8 +59,8 @@ import 'react-bottom-nav-mini-app/dist/index.css';
 
 ```jsx
 import React, { useState } from 'react';
-import { BottomNav } from 'react-bottom-nav-mini-app';
-import 'react-bottom-nav-mini-app/dist/index.css'; // ✅ Import CSS
+import { NBottomNav, NLoadingComponent, NSplashScreen } from 'react-prebuilt-components';
+import 'react-prebuilt-components/dist/index.css'; // ✅ Import CSS
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -67,7 +76,7 @@ function App() {
     <div>
       {/* Your app content */}
       
-      <BottomNav
+      <NBottomNav
         items={navItems}
         activeId={activeTab}
         onItemClick={(item) => setActiveTab(item.id)}
@@ -87,7 +96,7 @@ function App() {
 
 **Your simplified usage example:**
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -101,6 +110,46 @@ function App() {
   // badgeStyle={{border: "none", backgroundColor: "#ff0000"}}
 />
 ```
+```
+
+## 🔄 **LoadingComponent Usage**
+
+**Simple loading with beautiful defaults:**
+
+```jsx
+import React, { useState } from 'react';
+import { NLoadingComponent, NSplashScreen } from 'react-prebuilt-components';
+import 'react-prebuilt-components/dist/index.css';
+
+function App() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div>
+      {/* Your app content */}
+      
+      {/* Beautiful loading with defaults: burgundy spinner, white background, default text */}
+      <NLoadingComponent visible={loading} />
+    </div>
+  );
+}
+```
+
+**Advanced loading with custom logo and styling:**
+
+```jsx
+<NLoadingComponent
+  visible={loading}
+  size={80}
+  spinnerColor="#007aff"
+  logo="/your-logo.png" // or React component
+  logoSize={40}
+  loadingText="Please wait..."
+  backgroundColor="#ffffff"
+  backgroundOpacity={0.95}
+  speed={1.5}
+  textColor="#333333"
+/>
 ```
 
 ## 🎯 **Advanced Customization Examples**
@@ -134,7 +183,7 @@ const customNavItems = [
   // ... more items
 ];
 
-<BottomNav
+<NBottomNav
   items={customNavItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -212,7 +261,7 @@ const svgNavItems = [
   },
 ];
 
-<BottomNav
+<NBottomNav
   items={svgNavItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -225,7 +274,7 @@ const svgNavItems = [
 
 ```jsx
 // Pulse animation on icon click
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -235,7 +284,7 @@ const svgNavItems = [
 />
 
 // Scale bounce animation for icons
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -245,7 +294,7 @@ const svgNavItems = [
 />
 
 // Shake effect for icons (great for error states)
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -254,7 +303,7 @@ const svgNavItems = [
 />
 
 // Rotate animation on icons with haptic feedback
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -265,7 +314,7 @@ const svgNavItems = [
 />
 
 // Ripple effect for icons (Material Design style)
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={(item) => setActiveTab(item.id)}
@@ -317,7 +366,7 @@ const professionalNavItems = [
   },
 ];
 
-<BottomNav
+<NBottomNav
   items={professionalNavItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -335,7 +384,7 @@ const professionalNavItems = [
 
 ```jsx
 // Gaming App - High energy animations
-<BottomNav
+<NBottomNav
   items={[
     { id: 'play', label: 'Play', icon: '🎮', iconColor: '#10b981', activeIconColor: '#ffffff' },
     { id: 'leaderboard', label: 'Rank', icon: '🏆', iconColor: '#f59e0b', activeIconColor: '#ffffff' },
@@ -354,7 +403,7 @@ const professionalNavItems = [
 />
 
 // Banking App - Subtle and professional
-<BottomNav
+<NBottomNav
   items={financialNavItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -366,7 +415,7 @@ const professionalNavItems = [
 />
 
 // Social Media App - Engaging interactions
-<BottomNav
+<NBottomNav
   items={socialNavItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -387,7 +436,7 @@ The component is designed for mobile-first layouts with automatic centering:
 
 ```jsx
 // Mobile-focused navigation with rounded corners
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -397,7 +446,7 @@ The component is designed for mobile-first layouts with automatic centering:
 />
 
 // Custom max width with Tailwind
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -408,14 +457,14 @@ The component is designed for mobile-first layouts with automatic centering:
 />
 
 // Different mobile widths
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
   className="max-w-xs rounded-full bg-blue-500/90"  // Narrow mobile
 />
 
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -427,7 +476,30 @@ The component is designed for mobile-first layouts with automatic centering:
 
 ## 🔧 **Complete Props API**
 
-### Main Props
+### LoadingComponent Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `visible` | `boolean` | `true` | Whether the loading component is visible |
+| `size` | `number` | `80` | Size of the loading spinner (in pixels) |
+| `spinnerColor` | `string` | `'#8B4513'` | Color of the loading spinner |
+| `speed` | `number` | `2` | Speed of the loading animation (in seconds) |
+| `logo` | `React.ReactNode \| string` | `'https://www.nealika.com/img/logo-master.png'` | Logo/image to display in center |
+| `logoSize` | `number` | `40` | Size of the center logo/image (in pixels) |
+| `backgroundColor` | `string` | `'#ffffff'` | Background color of the loading overlay |
+| `backgroundOpacity` | `number` | `0.9` | Opacity of the background overlay |
+| `loadingText` | `string` | `undefined` | Text to display below the spinner |
+| `textColor` | `string` | `'#666666'` | Custom text color |
+| `textSize` | `number` | `14` | Font size of the loading text |
+| `strokeWidth` | `number` | `3` | Thickness of the spinner stroke |
+| `fullscreen` | `boolean` | `true` | Whether to show as fullscreen overlay |
+| `zIndex` | `number` | `9999` | Z-index for the loading overlay |
+| `className` | `string` | `''` | Additional CSS classes |
+| `style` | `React.CSSProperties` | `undefined` | Custom styles |
+
+### NBottomNav Props
+
+#### Main Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -500,7 +572,7 @@ interface BadgeStyle {
 
 ```jsx
 // Custom border and positioning
-<BottomNav
+<NBottomNav
   items={[
     { 
       id: 'messages', 
@@ -520,7 +592,7 @@ interface BadgeStyle {
 />
 
 // Different positions and custom styling
-<BottomNav
+<NBottomNav
   items={[
     { id: 'home', label: 'Home', icon: '🏠', badge: '!' },
     { id: 'shop', label: 'Shop', icon: '🛍️', badge: 'NEW' },
@@ -542,7 +614,7 @@ interface BadgeStyle {
 />
 
 // Floating badge with gradient
-<BottomNav
+<NBottomNav
   items={navItems}
   badgeStyle={{
     background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
@@ -635,12 +707,98 @@ interface BottomNavItem {
 - **PNG/JPG Images**: `icon: "/images/home.png"`
 - **React Components**: `icon: <HomeIcon size={20} />`
 
+## 🌟 **NSplashScreen Component**
+
+Perfect for Mini Apps! Create professional splash screens with logo and company branding.
+
+### Basic Usage
+
+```jsx
+import { NSplashScreen } from 'react-prebuilt-components';
+
+function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  return (
+    <>
+      <NSplashScreen
+        isVisible={showSplash}
+        duration={3000}
+        onHide={() => setShowSplash(false)}
+      />
+      {/* Your main app content */}
+    </>
+  );
+}
+```
+
+### Custom Branding
+
+```jsx
+<NSplashScreen
+  isVisible={showSplash}
+  duration={4000}
+  logoSrc="/your-logo.png"
+  logoWidth={150}
+  logoHeight={150}
+  companyName="Your Company Name"
+  backgroundColor="#f8f9fa"
+  logoAnimation="bounce"
+  onHide={() => setShowSplash(false)}
+/>
+```
+
+### Advanced Customization
+
+```jsx
+<NSplashScreen
+  isVisible={showSplash}
+  logoSrc="/assets/app-logo.svg"
+  logoWidth={180}
+  logoHeight={120}
+  powerByText="Powered by Your Brand"
+  powerByColor="#007bff"
+  powerByFontSize={16}
+  backgroundColor="#ffffff"
+  logoAnimation="slideUp"
+  animationDuration={1.5}
+  logoStyle={{
+    borderRadius: '12px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+  }}
+  onHide={() => setShowSplash(false)}
+/>
+```
+
+### NSplashScreenProps
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `isVisible` | `boolean` | `true` | Whether splash screen is visible |
+| `duration` | `number` | `3000` | Auto-hide duration in ms (0 = manual) |
+| `onHide` | `() => void` | `undefined` | Callback when hiding |
+| `logoSrc` | `string` | `placeholder` | Logo image URL |
+| `logoAlt` | `string` | `'App Logo'` | Logo alt text |
+| `logoWidth` | `number` | `120` | Logo width in pixels |
+| `logoHeight` | `number` | `120` | Logo height in pixels |
+| `companyName` | `string` | `'Nealika Co., Ltd'` | Company name for "Power by" |
+| `backgroundColor` | `string` | `'#ffffff'` | Background color |
+| `logoStyle` | `CSSProperties` | `undefined` | Custom logo styling |
+| `powerByColor` | `string` | `'#666666'` | Power by text color |
+| `powerByFontSize` | `number` | `14` | Power by font size |
+| `powerByText` | `string` | `undefined` | Custom power by text |
+| `logoAnimation` | `'fadeIn' \| 'slideUp' \| 'bounce' \| 'none'` | `'fadeIn'` | Logo animation type |
+| `animationDuration` | `number` | `1` | Animation duration in seconds |
+| `className` | `string` | `''` | Custom CSS class |
+| `style` | `CSSProperties` | `undefined` | Custom styling |
+| `zIndex` | `number` | `9999` | Z-index for positioning |
+
 ## 🎨 **Complete Styling Examples**
 
 ### Dark Theme
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -654,7 +812,7 @@ interface BottomNavItem {
 ### Colorful Gradient
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -672,7 +830,7 @@ interface BottomNavItem {
 ### Custom Heights & Spacing
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -691,7 +849,7 @@ interface BottomNavItem {
 ### Icons Only (No Labels)
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -706,7 +864,7 @@ interface BottomNavItem {
 
 ```jsx
 // Small rounded top (4px)
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -715,7 +873,7 @@ interface BottomNavItem {
 />
 
 // Medium rounded top (8px) 
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -724,7 +882,7 @@ interface BottomNavItem {
 />
 
 // Large rounded top (12px)
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -733,7 +891,7 @@ interface BottomNavItem {
 />
 
 // Extra large rounded top (16px) - like Tailwind rounded-t-2xl
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -742,7 +900,7 @@ interface BottomNavItem {
 />
 
 // 2XL rounded top (20px)
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -751,7 +909,7 @@ interface BottomNavItem {
 />
 
 // 3XL rounded top (24px)
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleClick}
@@ -766,8 +924,8 @@ Perfect integration with React Router for single-page applications:
 
 ```jsx
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { BottomNav, BottomNavItem } from "react-bottom-nav-mini-app";
-import 'react-bottom-nav-mini-app/dist/index.css'; // ✅ Import CSS
+import { BottomNav, BottomNavItem } from "react-prebuilt-components";
+import 'react-prebuilt-components/dist/index.css'; // ✅ Import CSS
 
 function AppContent() {
   const navigate = useNavigate();
@@ -848,7 +1006,7 @@ function AppContent() {
       </main>
 
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 max-w-md w-full">
-        <BottomNav
+        <NBottomNav
           items={navItems}
           activeId={getActiveTab()}
           onItemClick={handleNavClick}
@@ -875,7 +1033,7 @@ function App() {
 ### Telegram Mini Apps
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleNavigation}
@@ -889,7 +1047,7 @@ function App() {
 ### WeChat Mini Programs
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={navItems}
   activeId={activeTab}
   onItemClick={handleNavigation}
@@ -902,7 +1060,7 @@ function App() {
 ### E-commerce App Example
 
 ```jsx
-<BottomNav
+<NBottomNav
   items={[
     { id: 'shop', label: 'Shop', icon: '🛍️' },
     { id: 'cart', label: 'Cart', icon: '🛒', badge: '3' },
@@ -945,8 +1103,8 @@ function App() {
 ## 📝 **Full TypeScript Support**
 
 ```typescript
-import { BottomNav, BottomNavProps, BottomNavItem } from 'react-bottom-nav-mini-app';
-import 'react-bottom-nav-mini-app/dist/index.css'; // ✅ Import CSS
+import { BottomNav, BottomNavProps, BottomNavItem } from 'react-prebuilt-components';
+import 'react-prebuilt-components/dist/index.css'; // ✅ Import CSS
 
 // Extended interface for React Router integration
 interface NavItemWithRoute extends BottomNavItem {
@@ -955,7 +1113,7 @@ interface NavItemWithRoute extends BottomNavItem {
 
 const MyNav: React.FC<{ items: BottomNavItem[] }> = ({ items }) => {
   return (
-    <BottomNav
+    <NBottomNav
       items={items}
       activeId="home"
       onItemClick={(item) => {
@@ -1002,7 +1160,9 @@ MIT © [maibunheng]
 
 ## 🚀 **Changelog**
 
-### 2.0.0 - Enhanced Customization
+### 2.0.0 - React Prebuilt Components (Package Renamed)
+- **🎉 PACKAGE RENAMED**: `react-bottom-nav-mini-app` → `react-prebuilt-components`
+- **✨ NEW COMPONENT**: LoadingComponent with circular spinner and center logo support
 - **NEW**: Per-item color customization (`iconColor`, `activeIconColor`, `textColor`, `activeTextColor`)
 - **NEW**: Per-item background colors (`backgroundColor`, `activeBackgroundColor`)
 - **NEW**: Dual icon support with `activeIcon` for different active/inactive states
@@ -1011,12 +1171,15 @@ MIT © [maibunheng]
 - **NEW**: Advanced typography controls (`fontFamily`, `fontSize`, `fontWeight`, `iconSize`)
 - **NEW**: Custom `badgeStyle` configuration
 - **NEW**: Layout controls (`itemGap`, `borderRadius`, `height`, `padding`)
+- **NEW**: `roundedTop` prop for Tailwind-like top border radius
 - **IMPROVED**: Enhanced TypeScript definitions with full customization support
 - **IMPROVED**: Better responsive design and accessibility
+- **IMPROVED**: React Router integration examples
 
 ### 1.0.0 - Initial Release
 - Basic BottomNav component with variants and customization
 - Mini App optimizations (Telegram, WeChat)
+- TypeScript support and accessibility features
 - TypeScript support and accessibility features
 - Haptic feedback and safe area padding
 - Dark mode support
