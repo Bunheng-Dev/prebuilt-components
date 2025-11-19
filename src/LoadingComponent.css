@@ -38,6 +38,12 @@
   transform-origin: center;
 }
 
+.loading-circle-background {
+  stroke-dashoffset: 0;
+  margin: 0px;
+  padding: 0px;
+}
+
 .loading-circle-spinner {
   animation: loading-spin 1s linear infinite;
   transform-origin: center;
@@ -86,6 +92,15 @@
 
 /* Animations */
 @keyframes loading-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-rotate { 
   0% {
     transform: rotate(0deg);
   }

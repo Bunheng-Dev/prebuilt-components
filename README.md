@@ -1,15 +1,13 @@
-# React Prebuilt Components
+# Prebuilt Components
 
-# React Prebuilt Components
-
-A modern, customizable React component library featuring **NBottomNav** for bottom navigation, **NLoadingComponent** for loading states, and **NSplashScreen** for Mini Apps.
+A modern, customizable React component library featuring **NBottomNav** for bottom navigation, **NLoadingComponent** for loading states, **NSplashScreen** for splash screens, and **NToast** for beautiful toast notifications.
 
 ## 📦 **Components Included**
 
 - ✅ **NBottomNav** - Advanced bottom navigation with animations and customization
-- ✅ **NLoadingComponent** - Circular spinner with center logo support
+- ✅ **NLoadingComponent** - Circular spinner with center logo and backdrop support
 - ✅ **NSplashScreen** - Splash screen component for Mini Apps
-- 🔄 **More Components Coming** - Toast, Header, Modal, Card, and more!
+- ✅ **NToast** - Beautiful toast notifications with swipe-to-dismiss
 
 ## 🎯 **Perfect for Mini Apps**
 
@@ -36,21 +34,21 @@ A modern, customizable React component library featuring **NBottomNav** for bott
 ## 📦 **Installation**
 
 ```bash
-npm install react-prebuilt-components
+npm install prebuilt-components
 ```
 
 **Don't forget to import the CSS:**
 
 ```css
 /* In your CSS file or index.css */
-@import 'react-prebuilt-components/dist/index.css';
+@import 'prebuilt-components/dist/index.css';
 ```
 
 **Or in your React component:**
 
 ```jsx
 // In your main App.js or component file
-import 'react-prebuilt-components/dist/index.css';
+import 'prebuilt-components/dist/index.css';
 ```
 
 ## 🎨 **Basic Usage**
@@ -59,8 +57,8 @@ import 'react-prebuilt-components/dist/index.css';
 
 ```jsx
 import React, { useState } from 'react';
-import { NBottomNav, NLoadingComponent, NSplashScreen } from 'react-prebuilt-components';
-import 'react-prebuilt-components/dist/index.css'; // ✅ Import CSS
+import { NBottomNav, NLoadingComponent, NSplashScreen } from 'prebuilt-components';
+import 'prebuilt-components/dist/index.css'; // ✅ Import CSS
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -118,8 +116,8 @@ function App() {
 
 ```jsx
 import React, { useState } from 'react';
-import { NLoadingComponent, NSplashScreen } from 'react-prebuilt-components';
-import 'react-prebuilt-components/dist/index.css';
+import { NLoadingComponent, NSplashScreen } from 'prebuilt-components';
+import 'prebuilt-components/dist/index.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -152,7 +150,157 @@ function App() {
 />
 ```
 
+## 🔔 **NToast Component Usage**
+
+**Beautiful toast notifications inspired by Sonner with smooth animations:**
+
+```jsx
+import React, { useState } from 'react';
+import { NToast } from 'prebuilt-components';
+import 'prebuilt-components/dist/index.css';
+
+function App() {
+  const [showToast, setShowToast] = useState(false);
+
+  const handleShowToast = () => {
+    setShowToast(true);
+  };
+
+  return (
+    <div>
+      <button onClick={handleShowToast}>Show Toast</button>
+      
+      {/* Simple success toast */}
+      <NToast
+        isVisible={showToast}
+        type="success"
+        message="Operation completed successfully!"
+        onHide={() => setShowToast(false)}
+      />
+    </div>
+  );
+}
+```
+
+### Toast Types
+
+```jsx
+// Success toast (green)
+<NToast
+  isVisible={showToast}
+  type="success"
+  message="Changes saved successfully!"
+  description="Your profile has been updated"
+  onHide={() => setShowToast(false)}
+/>
+
+// Error toast (red)
+<NToast
+  isVisible={showToast}
+  type="error"
+  message="Failed to save changes"
+  description="Please check your internet connection"
+  showCloseButton={true}
+  onHide={() => setShowToast(false)}
+/>
+
+// Warning toast (yellow)
+<NToast
+  isVisible={showToast}
+  type="warning"
+  message="Low disk space"
+  description="Consider removing unused files"
+  position="top"
+  onHide={() => setShowToast(false)}
+/>
+
+// Info toast (blue)
+<NToast
+  isVisible={showToast}
+  type="info"
+  message="New features available"
+  description="Check out the latest updates"
+  duration={8000}
+  onHide={() => setShowToast(false)}
+/>
+```
+
+### Advanced Toast Customization
+
+```jsx
+// Custom colors and positioning
+<NToast
+  isVisible={showToast}
+  type="success"
+  message="Payment successful!"
+  description="Your order #12345 has been confirmed"
+  position="top"
+  duration={10000}
+  showCloseButton={true}
+  backgroundColor="#10b981"
+  textColor="#ffffff"
+  fontSize={16}
+  borderRadius={12}
+  showProgress={true}
+  icon="🎉"
+  onHide={() => setShowToast(false)}
+/>
+
+// Swipe-to-dismiss toast (no close button)
+<NToast
+  isVisible={showToast}
+  type="info"
+  message="Swipe to dismiss"
+  description="Drag this toast down to close it"
+  showCloseButton={false}
+  swipeToDismiss={true}
+  onHide={() => setShowToast(false)}
+/>
+
+// Toast with custom icon
+<NToast
+  isVisible={showToast}
+  type="success"
+  message="Welcome back!"
+  icon={<CustomIcon />}
+  showDefaultIcon={false}
+  onHide={() => setShowToast(false)}
+/>
+```
+
+### NToast Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `isVisible` | `boolean` | `false` | Whether the toast is visible |
+| `type` | `'success' \| 'error' \| 'warning' \| 'info'` | `'success'` | Toast type (determines color and icon) |
+| `message` | `string` | **required** | Main toast message |
+| `description` | `string` | `undefined` | Optional detailed description |
+| `position` | `'top' \| 'bottom'` | `'bottom'` | Toast position on screen |
+| `duration` | `number` | `8000` | Auto-hide duration in ms (0 = no auto-hide) |
+| `showCloseButton` | `boolean` | `false` | Show close button |
+| `showProgress` | `boolean` | `true` | Show progress indicator |
+| `showDefaultIcon` | `boolean` | `true` | Show default type icon |
+| `icon` | `React.ReactNode` | `undefined` | Custom icon (overrides default) |
+| `backgroundColor` | `string` | Auto (based on type) | Custom background color |
+| `textColor` | `string` | Auto (based on type) | Custom text color |
+| `fontSize` | `number` | `15` | Message font size |
+| `descriptionFontSize` | `number` | `13` | Description font size |
+| `borderRadius` | `number` | `12` | Border radius in pixels |
+| `padding` | `string` | `'16px'` | Toast padding |
+| `width` | `string` | `'auto'` | Toast width |
+| `maxWidth` | `string` | `'400px'` | Maximum toast width |
+| `swipeToDismiss` | `boolean` | `true` | Enable swipe-to-dismiss |
+| `animationDuration` | `number` | `0.3` | Animation duration in seconds |
+| `offset` | `number` | `20` | Distance from screen edge |
+| `zIndex` | `number` | `9999` | Z-index for stacking |
+| `className` | `string` | `''` | Custom CSS class |
+| `style` | `React.CSSProperties` | `undefined` | Custom inline styles |
+| `onHide` | `() => void` | `undefined` | Callback when toast hides |
+| `onShow` | `() => void` | `undefined` | Callback when toast shows |
+
 ## 🎯 **Advanced Customization Examples**
+
 
 ### Per-Item Custom Styling
 
@@ -714,7 +862,7 @@ Perfect for Mini Apps! Create professional splash screens with logo and company 
 ### Basic Usage
 
 ```jsx
-import { NSplashScreen } from 'react-prebuilt-components';
+import { NSplashScreen } from 'prebuilt-components';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -924,8 +1072,8 @@ Perfect integration with React Router for single-page applications:
 
 ```jsx
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { BottomNav, BottomNavItem } from "react-prebuilt-components";
-import 'react-prebuilt-components/dist/index.css'; // ✅ Import CSS
+import { BottomNav, BottomNavItem } from "prebuilt-components";
+import 'prebuilt-components/dist/index.css'; // ✅ Import CSS
 
 function AppContent() {
   const navigate = useNavigate();
@@ -1103,8 +1251,8 @@ function App() {
 ## 📝 **Full TypeScript Support**
 
 ```typescript
-import { BottomNav, BottomNavProps, BottomNavItem } from 'react-prebuilt-components';
-import 'react-prebuilt-components/dist/index.css'; // ✅ Import CSS
+import { BottomNav, BottomNavProps, BottomNavItem } from 'prebuilt-components';
+import 'prebuilt-components/dist/index.css'; // ✅ Import CSS
 
 // Extended interface for React Router integration
 interface NavItemWithRoute extends BottomNavItem {
@@ -1156,30 +1304,51 @@ const navItemsWithRoutes: NavItemWithRoute[] = [
 
 ## 📄 **License**
 
-MIT © [maibunheng]
+MIT © [MAIBUNHENG] 
 
 ## 🚀 **Changelog**
 
-### 2.0.0 - React Prebuilt Components (Package Renamed)
-- **🎉 PACKAGE RENAMED**: `react-bottom-nav-mini-app` → `react-prebuilt-components`
-- **✨ NEW COMPONENT**: LoadingComponent with circular spinner and center logo support
-- **NEW**: Per-item color customization (`iconColor`, `activeIconColor`, `textColor`, `activeTextColor`)
-- **NEW**: Per-item background colors (`backgroundColor`, `activeBackgroundColor`)
-- **NEW**: Dual icon support with `activeIcon` for different active/inactive states
-- **NEW**: Per-item styling with `textStyle` and `iconStyle` props
-- **NEW**: `floating` variant with modern blur effect design
-- **NEW**: Advanced typography controls (`fontFamily`, `fontSize`, `fontWeight`, `iconSize`)
-- **NEW**: Custom `badgeStyle` configuration
-- **NEW**: Layout controls (`itemGap`, `borderRadius`, `height`, `padding`)
-- **NEW**: `roundedTop` prop for Tailwind-like top border radius
-- **IMPROVED**: Enhanced TypeScript definitions with full customization support
-- **IMPROVED**: Better responsive design and accessibility
-- **IMPROVED**: React Router integration examples
-
 ### 1.0.0 - Initial Release
-- Basic BottomNav component with variants and customization
-- Mini App optimizations (Telegram, WeChat)
-- TypeScript support and accessibility features
-- TypeScript support and accessibility features
-- Haptic feedback and safe area padding
-- Dark mode support
+- **🎉 PACKAGE NAME**: `prebuilt-components`
+- **✨ COMPONENTS**: NBottomNav, NLoadingComponent, NSplashScreen, NToast
+- **NBottomNav Features**:
+  - Per-item color customization (`iconColor`, `activeIconColor`, `textColor`, `activeTextColor`)
+  - Per-item background colors (`backgroundColor`, `activeBackgroundColor`)
+  - Dual icon support with `activeIcon` for different active/inactive states
+  - Per-item styling with `textStyle` and `iconStyle` props
+  - `floating` variant with modern blur effect design
+  - Advanced typography controls (`fontFamily`, `fontSize`, `fontWeight`, `iconSize`)
+  - Custom `badgeStyle` configuration
+  - Layout controls (`itemGap`, `borderRadius`, `height`, `padding`)
+  - `roundedTop` prop for Tailwind-like top border radius
+  - Click animations: pulse, ripple, scale-bounce, shake, rotate
+  - React Router integration support
+- **NLoadingComponent Features**:
+  - Circular spinner with customizable size, color, and speed
+  - Center logo support (image URL or React component)
+  - Optional semi-transparent circular background with opacity control
+  - Fullscreen overlay mode
+  - Custom loading text and styling
+- **NSplashScreen Features**:
+  - Auto-hide with configurable duration
+  - Custom logo and company branding
+  - Multiple animation types: fadeIn, slideUp, bounce
+  - Fully customizable styling
+- **NToast Features**:
+  - Beautiful toast notifications with 4 types: success, error, warning, info
+  - Swipe-to-dismiss functionality
+  - Auto-dismiss with progress indicator
+  - Custom icons with pop animations
+  - Description support for detailed messages
+  - Position control: top or bottom
+  - Customizable colors, sizes, and styles
+- **General**:
+  - Full TypeScript support with comprehensive type definitions
+  - Zero dependencies (only React peer dependency)
+  - Accessibility features (ARIA attributes, keyboard navigation)
+  - Dark mode support
+  - Mobile-first responsive design
+  - Mini App optimizations (Telegram, WeChat)
+  - Safe area support for iOS devices
+  - Haptic feedback support
+

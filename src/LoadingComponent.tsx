@@ -93,9 +93,9 @@ const NLoadingComponent: React.FC<NLoadingComponentProps> = ({
   isShow = true,
   isVisible = true,
   size = 80,
-  spinnerColor = "#0e80ebff",
+  spinnerColor = "#000000",
   speed = 1.5,
-  logo = "https://via.placeholder.com/62x62/0e80eb/ffffff?text=N",
+  logo = "https://www.npmjs.com/npm-avatar/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdmF0YXJVUkwiOiJodHRwczovL3MuZ3JhdmF0YXIuY29tL2F2YXRhci84ZWNjMjQ2OGY2YjEwYzIxY2EzZmM3Nzk3ZTNhNjQ0Yz9zaXplPTQ5NiZkZWZhdWx0PXJldHJvIn0.Iabsa4eJ0mPKMBFLsCryOVrXxFLG3I5m_HGpboOOpbk",
   logoSize = 62,
   backgroundColor = "#ffffff0c",
   backgroundOpacity = 0.8,
@@ -146,6 +146,7 @@ const NLoadingComponent: React.FC<NLoadingComponentProps> = ({
   };
 
   const spinnerRadius = (size - strokeWidth) / 2;
+  const backgroundCircleColor = "#0000002d";
 
   return (
     <div
@@ -177,11 +178,23 @@ const NLoadingComponent: React.FC<NLoadingComponentProps> = ({
             className="loading-spinner"
             width={size}
             height={size}
-            style={{
-              animation: `loading-rotate ${speed}s linear infinite`,
-            }}
+            style={
+              {
+                // animation: `loading-rotate ${speed}s linear infinite`,
+              }
+            }
           >
-            {/* Progress Circle */}
+            {/* Background Circle (Light Grey Ring) */}
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={spinnerRadius}
+              fill="none"
+              stroke={backgroundCircleColor}
+              strokeWidth={strokeWidth}
+              className="loading-circle-background"
+            />
+            {/* Progress Circle (Black Segment) */}
             <circle
               cx={size / 2}
               cy={size / 2}
@@ -191,7 +204,10 @@ const NLoadingComponent: React.FC<NLoadingComponentProps> = ({
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               className="loading-circle-spinner"
-              strokeDasharray="60 200"
+              strokeDasharray="80 200"
+              style={{
+                animation: `loading-rotate ${speed}s linear infinite`,
+              }}
             />
           </svg>
 
