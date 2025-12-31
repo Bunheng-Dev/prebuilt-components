@@ -632,7 +632,7 @@ The component is designed for mobile-first layouts with automatic centering:
 | `size` | `number` | `80` | Size of the loading spinner (in pixels) |
 | `spinnerColor` | `string` | `'#8B4513'` | Color of the loading spinner |
 | `speed` | `number` | `2` | Speed of the loading animation (in seconds) |
-| `logo` | `React.ReactNode \| string` | `'https://www.nealika.com/img/logo-master.png'` | Logo/image to display in center |
+| `logo` | `React.ReactNode \| string` | `'https://www.example.com/img/logo-master.png'` | Logo/image to display in center |
 | `logoSize` | `number` | `40` | Size of the center logo/image (in pixels) |
 | `backgroundColor` | `string` | `'#ffffff'` | Background color of the loading overlay |
 | `backgroundOpacity` | `number` | `0.9` | Opacity of the background overlay |
