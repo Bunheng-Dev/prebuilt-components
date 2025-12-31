@@ -929,7 +929,7 @@ function App() {
 | `logoAlt` | `string` | `'App Logo'` | Logo alt text |
 | `logoWidth` | `number` | `120` | Logo width in pixels |
 | `logoHeight` | `number` | `120` | Logo height in pixels |
-| `companyName` | `string` | `'Nealika Co., Ltd'` | Company name for "Power by" |
+| `companyName` | `string` | `'ABC Co., Ltd'` | Company name for "Power by" |
 | `backgroundColor` | `string` | `'#ffffff'` | Background color |
 | `logoStyle` | `CSSProperties` | `undefined` | Custom logo styling |
 | `powerByColor` | `string` | `'#666666'` | Power by text color |
