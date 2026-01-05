@@ -1,0 +1,42 @@
+:root {
+  /* Default very large z-index so overlays sit above app chrome; consumers may override */
+  --n-sheet-z-index: var(--n-sheet-z-index, 2147483647);
+}
+
+.n-overlay-portal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--n-sheet-z-index);
+  pointer-events: none;
+}
+
+.n-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--n-sheet-z-index);
+  pointer-events: none;
+}
+
+.n-overlay.n-overlay--open {
+  pointer-events: auto;
+}
+
+.n-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 200ms ease, backdrop-filter 200ms ease;
+  pointer-events: none;
+}
+
+.n-overlay-backdrop--visible {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px) saturate(110%);
+  pointer-events: auto;
+}
+
+/* Ensure overlayed content sits above backdrop */
+.n-overlay-content {
+  position: relative;
+  z-index: calc(var(--n-sheet-z-index) + 1);
+}

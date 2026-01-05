@@ -1,0 +1,144 @@
+.n-bottom-sheet {
+  position: fixed;
+  inset: 0;
+  /* Ensure sheet overlays (above bottom nav). Use a CSS variable so consumers can override if needed. */
+  z-index: var(--n-sheet-z-index, 99999);
+  display: block;
+  pointer-events: none; /* enabled when open */
+}
+
+/* Portal containers: ensure they don't create lower stacking contexts and sit above other UI */
+.n-bottom-sheet-portal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--n-sheet-z-index, 99999);
+  pointer-events: none;
+}
+
+.n-bottom-sheet.nbs-open {
+  pointer-events: auto;
+}
+
+/* Aggressive visual flush when open to cover any bottom UI peeking through */
+.n-bottom-sheet.nbs-open .nbs-sheet {
+  left: 0 !important;
+  transform: translateX(0) translateY(0) !important;
+  width: 100% !important;
+  margin: 0 !important;
+  bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+}
+
+/* Backdrop - hidden state */
+.nbs-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  transition: background 0.5s ease, backdrop-filter 0.5s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Backdrop - visible state */
+.nbs-backdrop--visible {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+/* Sheet */
+.nbs-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, calc(100% + 80px));
+  /* 0.5s duration with a 'smooth out' timing function */
+  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+  
+  width: calc(100% - 24px);
+  margin-bottom: 12px;
+  background: white;
+  border-radius: 16px 16px 12px 12px;
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the sheet content scroll internally when tall */
+.nbs-body {
+  overflow: auto; /* allow internal scrolling */
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+  max-height: calc(90vh - 64px); /* leave room for handle and header */
+}
+
+@media (min-width: 768px) {
+  .nbs-sheet {
+    /* Keep fixed left 50% and use translate(-50%, ...) for precise centering */
+    left: 50%;
+    width: min(720px, 100%);
+    box-sizing: border-box;
+    margin: 0 auto 20px;
+    max-height: 80vh;
+  }
+  .nbs-body {
+    max-height: calc(80vh - 72px);
+    padding: 16px;
+  }
+}
+
+.n-bottom-sheet.nbs-open .nbs-sheet {
+  /* Y goes to 0, X stays -50%. No horizontal jump! */
+  transform: translate(-50%, 0) !important;
+  left: 50% !important;
+  width: calc(100% - 24px) !important;
+  margin-bottom: 12px !important;
+  border-radius: 16px 16px 12px 12px !important;
+}
+
+/* Handle */
+.nbs-handle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: grab;
+}
+
+.nbs-handle__bar {
+  width: 36px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+}
+
+.nbs-body {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+  /* Add safe area padding to bottom of content */
+  padding-bottom: calc(env(safe-area-inset-bottom, 12px) + 12px);
+  max-height: calc(90vh - 64px);
+}
+
+/* When dragging we disable transition on transform - handled inline in JS */
+
+@media (min-width: 768px) {
+  .nbs-sheet {
+    width: min(700px, calc(100% - 40px));
+    margin-bottom: 24px;
+    transform: translate(-50%, calc(100% + 120px));
+  }
+  .n-bottom-sheet.nbs-open .nbs-sheet {
+    transform: translate(-50%, 0);
+    margin-bottom: 24px;
+  }
+
+  .nbs-body {
+    max-height: calc(80vh - 72px);
+    padding: 16px;
+  }
+}

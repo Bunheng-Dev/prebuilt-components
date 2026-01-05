@@ -1,0 +1,145 @@
+/* NHeader - Mobile AppBar / Header styles */
+
+.n-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  width: 100%;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  background-color: var(--n-header-bg, #ffffff);
+  color: var(--n-header-color, #111827);
+  z-index: 1100;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.n-header--transparent {
+  background-color: transparent;
+}
+
+.n-header--shadow {
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+}
+
+.n-header__left,
+.n-header__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 48px;
+  z-index: 2; /* keep buttons above the centered title */
+  gap: 8px; /* space between action items */
+}
+
+.n-header__right {
+  justify-content: flex-end;
+}
+
+/* Action button and icon styling */
+.n-header__right button,
+.n-header__left button {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.n-header__right button:hover,
+.n-header__left button:hover,
+.n-header__right button:focus,
+.n-header__left button:focus {
+  background-color: rgba(0,0,0,0.04);
+  outline: none;
+}
+
+.n-header__right img,
+.n-header__left img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Center is absolutely centered to keep the title visually centered even when left/right differ */
+.n-header__center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* allow clicks to pass to left/right unless explicitly on the title */
+  z-index: 1;
+}
+
+.n-header__title {
+  pointer-events: auto; /* allow title interactions if needed */
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+}
+
+.n-header__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Default visible surface for the back button: white surface, subtle border and shadow */
+  background-color: var(--n-header-back-bg, #ffffff);
+  border: 1px solid rgba(0,0,0,0.06);
+  /* box-shadow: 0 1px 2px rgba(0,0,0,0.06); */
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  color: var(--n-header-back-icon, #111827);
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.n-header__back:active,
+.n-header__back:focus {
+  outline: none;
+  transform: translateY(0.5px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Transparent header variant: use a semi-opaque white surface for contrast on darker backgrounds */
+.n-header--transparent .n-header__back {
+  background-color: rgba(0,0,0,0.04);
+  /* border: 1px solid rgba(0,0,0,0.08); */
+  color: var(--n-header-back-icon, #111827);
+}
+
+.n-header--transparent .n-header__back:active,
+.n-header--transparent .n-header__back:focus {
+  background-color: rgba(255,255,255,0.94);
+}
+
+/* Ensure SVG icons inherit the button color */
+.n-header__back svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+  .n-header__title {
+    font-size: 15px;
+  }
+}
+
+/* Reduced motion and accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .n-header {
+    transition: none;
+  }
+}

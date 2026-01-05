@@ -1,0 +1,163 @@
+.n-action-sheet {
+  position: fixed;
+  inset: 0;
+  /* Ensure overlay is above the bottom nav. Use a CSS variable so consumers can override if needed. */
+  z-index: var(--n-sheet-z-index, 99999);
+  pointer-events: none; /* enabled when open */
+}
+
+/* Portal containers: ensure they don't create lower stacking contexts and sit above other UI */
+/* The overlay component defines the global `--n-sheet-z-index` variable; portals should still avoid pointer interception when closed */
+.n-action-sheet-portal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--n-sheet-z-index);
+  /* do not intercept pointer events when the sheet is closed; the sheet container will enable events when open */
+  pointer-events: none;
+}
+
+/* Ensure the sheet itself is clearly on top */
+.n-action-sheet,
+.n-action-sheet .n-as-sheet {
+  z-index: var(--n-sheet-z-index);
+}
+
+.n-action-sheet.n-as-open {
+  pointer-events: auto;
+}
+
+/* Aggressive visual flush when open to cover any bottom UI peeking through */
+.n-action-sheet.n-as-open .n-as-sheet {
+  left: 0 !important;
+  transform: translateX(0) translateY(0) !important;
+  width: 100% !important;
+  margin: 0 !important;
+  bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+}
+
+/* Backdrop */
+.n-as-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 200ms ease, backdrop-filter 200ms ease;
+  pointer-events: none;
+}
+
+.n-as-backdrop--visible {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px) saturate(110%);
+  pointer-events: auto;
+}
+
+/* Sheet */
+.n-as-sheet {
+  position: fixed;
+  left: 50%; /* Keep centered */
+  bottom: 0;
+  /* Always keep -50% X. Add +60px to Y to hide the margin/shadow */
+  transform: translate(-50%, calc(100% + 60px)); 
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  width: calc(100% - 24px);
+  max-width: 500px;
+  margin-bottom: 12px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
+  z-index: var(--n-sheet-z-index);
+}
+
+/* --- Open State (Vertical Slide Only) --- */
+.n-action-sheet.n-as-open .n-as-sheet {
+  /* Keep X at -50%. Only change Y to 0 */
+  transform: translate(-50%, 0) !important; 
+  left: 50% !important; /* Force it to stay centered */
+  width: calc(100% - 24px) !important;
+  margin-bottom: 12px !important;
+  border-radius: 12px !important;
+}
+
+.n-as-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  /* safe area at bottom */
+  padding-bottom: calc(env(safe-area-inset-bottom, 12px) + 12px);
+  max-height: calc(90vh - 80px); /* allow sheet chrome + handle */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.n-as-action {
+  appearance: none;
+  border: none;
+  background: #fff;
+  min-height: 48px; /* touch target */
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  color: var(--n-action-sheet-action-text, #222);
+}
+
+/* Focus accessibility */
+.n-as-action:focus {
+  outline: 3px solid rgba(56, 142, 255, 0.18);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .n-as-sheet {
+    width: 400px;
+    margin-bottom: 20px;
+    transform: translate(-50%, calc(100% + 100px));
+  }
+  .n-action-sheet.n-as-open .n-as-sheet {
+    transform: translate(-50%, 0);
+    margin-bottom: 20px;
+  }
+
+  .n-as-actions {
+    padding: 16px;
+    gap: 12px;
+    max-height: calc(80vh - 96px);
+  }
+  .n-as-action {
+    font-size: 16px;
+    padding: 14px 20px;
+  }
+}
+
+.n-as-cancel {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 8px solid transparent; /* visual separation */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.n-as-action--danger {
+  color: var(--n-action-sheet-action-danger, #d32f2f);
+}
+
+.n-as-action--disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .n-as-sheet {
+    width: min(720px, 100%);
+    margin: 0 auto 20px;
+  }
+}

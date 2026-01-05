@@ -89,6 +89,41 @@
   display: block;
 }
 
+/* Auto-hide when a sheet is open */
+body.n-sheet-open .rbn-bottom-nav,
+body.n-sheet-open .rbn-bottom-nav--floating {
+  transform: translateX(-50%) translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+body.n-sheet-open .rbn-bottom-nav__top-shadow {
+  transform: translateX(-50%) translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+/* Force-hide fallback: sometimes other styles or stacking contexts make the nav/top-shadow still visible. */
+body.n-sheet-open .rbn-bottom-nav {
+  z-index: -1 !important;
+}
+
+body.n-sheet-open .rbn-bottom-nav__top-shadow {
+  z-index: -1 !important;
+}  
+
+/* Also ensure the sheet covers the bottom area when open (no inset) */
+.n-bottom-sheet.nbs-open .nbs-sheet,
+.n-action-sheet.n-as-open .n-as-sheet {
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0) !important;
+  margin: 0 !important;
+  bottom: 0 !important;
+  box-shadow: 0 -18px 40px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
+} 
 /* Tailwind CSS Integration Support */
 /* Override component styles when Tailwind classes are detected */
 .rbn-bottom-nav[class*=\"rounded\"] {
