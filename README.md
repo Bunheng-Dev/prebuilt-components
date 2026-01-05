@@ -1,1354 +1,212 @@
 # Prebuilt Components
 
-A modern, customizable React component library featuring **NBottomNav** for bottom navigation, **NLoadingComponent** for loading states, **NSplashScreen** for splash screens, and **NToast** for beautiful toast notifications.
+A compact, mobile‑first React UI library designed for Mini Apps, PWAs, and modern web applications.
 
-## 📦 **Components Included**
+Included components:
+- **NHeader**
+- **NBottomNav**
+- **NBottomSheet**
+- **NActionSheet**
+- **Overlay**
+- **NEmptyState**
+- **NLoadingComponent**
+- **NSplashScreen**
+- **NToast**
 
-- ✅ **NBottomNav** - Advanced bottom navigation with animations and customization
-- ✅ **NLoadingComponent** - Circular spinner with center logo and backdrop support
-- ✅ **NSplashScreen** - Splash screen component for Mini Apps
-- ✅ **NToast** - Beautiful toast notifications with swipe-to-dismiss
+---
 
-## 🎯 **Perfect for Mini Apps**
-
-- ✅ **Telegram Mini Apps** - Optimized theme integration
-- ✅ **WeChat Mini Programs** - Touch-friendly interactions
-- ✅ **Mobile-First Design** - Max width 448px (28rem), centered layout
-- ✅ **PWA Ready** - Safe area support for iOS devices
-- ✅ **TypeScript Support** - Fully typed with IntelliSense
-
-## 🚀 **Enhanced Features**
-
-- ✅ **Better Defaults** - Top shadow enabled, clean badges, scale animations
-- ✅ **Unlimited Customization** - Per-item colors, styles, and icons
-- ✅ **Dual Icon Support** - Different icons for active/inactive states
-- ✅ **Multiple Variants** - Default, filled, minimal, floating styles
-- ✅ **Haptic Feedback** - Native vibration for touch interactions
-- ✅ **Badges & Indicators** - Show notifications and active states
-- ✅ **Accessibility** - WCAG compliant with ARIA attributes
-- ✅ **Dark Mode** - Automatic theme detection
-- ✅ **Animations** - Scale, bounce, slide, or no animation
-- ✅ **Safe Area Support** - Perfect for devices with notch
-- ✅ **Zero Dependencies** - Lightweight and performant
-
-## 📦 **Installation**
+## 🚀 Quick Start
 
 ```bash
 npm install prebuilt-components
 ```
 
-**Don't forget to import the CSS:**
+Import styles and components:
 
-```css
-/* In your CSS file or index.css */
-@import 'prebuilt-components/dist/index.css';
-```
-
-**Or in your React component:**
-
-```jsx
-// In your main App.js or component file
+```js
 import 'prebuilt-components/dist/index.css';
+import { NHeader } from 'prebuilt-components';
 ```
 
-## 🎨 **Basic Usage**
-
-**Simple setup with great defaults:**
+Minimal usage:
 
 ```jsx
-import React, { useState } from 'react';
-import { NBottomNav, NLoadingComponent, NSplashScreen } from 'prebuilt-components';
-import 'prebuilt-components/dist/index.css'; // ✅ Import CSS
-
-function App() {
-  const [activeTab, setActiveTab] = useState('home');
-
-  const navItems = [
-    { id: 'home', label: 'Home', icon: '🏠' },
-    { id: 'search', label: 'Search', icon: '🔍' },
-    { id: 'favorites', label: 'Favorites', icon: '❤️', badge: '3' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
-  ];
-
-  return (
-    <div>
-      {/* Your app content */}
-      
-      <NBottomNav
-        items={navItems}
-        activeId={activeTab}
-        onItemClick={(item) => setActiveTab(item.id)}
-      />
-    </div>
-  );
-}
+<NHeader title="Room Type" showBackButton onBack={() => history.back()} />
 ```
 
-**What you get with defaults:**
-- ✅ Top shadow enabled
-- ✅ Red badges with no border (#ff0000)
-- ✅ Scale animation on active state
-- ✅ Pulse animation on click
-- ✅ Mobile-first layout (max-width: 448px)
-- ✅ Auto-centered positioning
+---
 
-**Your simplified usage example:**
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  backgroundColor="#ffffff"
-  className="rounded-t-2xl mt-8"
-  activeColor="#6F5D29"
-  inactiveColor="#A3A3A3"
-  // No need for these anymore - they're defaults!
-  // topShadow={true}
-  // animation="scale" 
-  // badgeStyle={{border: "none", backgroundColor: "#ff0000"}}
-/>
-```
-```
+## 📚 Documentation
 
-## 🔄 **LoadingComponent Usage**
+Full documentation is available in the **`docs/`** folder:
 
-**Simple loading with beautiful defaults:**
+- 📘 [Usage Guide](./docs/USAGE.md)
+- 🧩 [API Reference](./docs/API.md)
+- 🧪 [Examples](./docs/EXAMPLES.md)
+- � [Overlay Docs](./docs/OVERLAY.md)
+- �📖 [Full Reference](./docs/FULL_REFERENCE.md)
 
-```jsx
-import React, { useState } from 'react';
-import { NLoadingComponent, NSplashScreen } from 'prebuilt-components';
-import 'prebuilt-components/dist/index.css';
+> For local development and package linking (`npm link`, `npm pack`, `yalc`), see  
+> 👉 [README-LOCAL.md](./README-LOCAL.md)
 
-function App() {
-  const [loading, setLoading] = useState(true);
+---
 
-  return (
-    <div>
-      {/* Your app content */}
-      
-      {/* Beautiful loading with defaults: burgundy spinner, white background, default text */}
-      <NLoadingComponent visible={loading} />
-    </div>
-  );
-}
-```
+## 🧩 Components Overview
 
-**Advanced loading with custom logo and styling:**
+### NHeader
+Mobile-style app bar with optional back button, title, and right actions.
 
-```jsx
-<NLoadingComponent
-  visible={loading}
-  size={80}
-  spinnerColor="#007aff"
-  logo="/your-logo.png" // or React component
-  logoSize={40}
-  loadingText="Please wait..."
-  backgroundColor="#ffffff"
-  backgroundOpacity={0.95}
-  speed={1.5}
-  textColor="#333333"
-/>
-```
+Key props:
+- `title?: string`
+- `showBackButton?: boolean`
+- `background?: 'solid' | 'transparent'`
+- `shadow?: boolean`
+- `height?: number | string`
 
-## 🔔 **NToast Component Usage**
+---
 
-**Beautiful toast notifications inspired by Sonner with smooth animations:**
+### NBottomNav
+Bottom navigation optimized for mobile UX.
 
-```jsx
-import React, { useState } from 'react';
-import { NToast } from 'prebuilt-components';
-import 'prebuilt-components/dist/index.css';
-
-function App() {
-  const [showToast, setShowToast] = useState(false);
-
-  const handleShowToast = () => {
-    setShowToast(true);
-  };
-
-  return (
-    <div>
-      <button onClick={handleShowToast}>Show Toast</button>
-      
-      {/* Simple success toast */}
-      <NToast
-        isVisible={showToast}
-        type="success"
-        message="Operation completed successfully!"
-        onHide={() => setShowToast(false)}
-      />
-    </div>
-  );
-}
-```
-
-### Toast Types
-
-```jsx
-// Success toast (green)
-<NToast
-  isVisible={showToast}
-  type="success"
-  message="Changes saved successfully!"
-  description="Your profile has been updated"
-  onHide={() => setShowToast(false)}
-/>
-
-// Error toast (red)
-<NToast
-  isVisible={showToast}
-  type="error"
-  message="Failed to save changes"
-  description="Please check your internet connection"
-  showCloseButton={true}
-  onHide={() => setShowToast(false)}
-/>
-
-// Warning toast (yellow)
-<NToast
-  isVisible={showToast}
-  type="warning"
-  message="Low disk space"
-  description="Consider removing unused files"
-  position="top"
-  onHide={() => setShowToast(false)}
-/>
-
-// Info toast (blue)
-<NToast
-  isVisible={showToast}
-  type="info"
-  message="New features available"
-  description="Check out the latest updates"
-  duration={8000}
-  onHide={() => setShowToast(false)}
-/>
-```
-
-### Advanced Toast Customization
-
-```jsx
-// Custom colors and positioning
-<NToast
-  isVisible={showToast}
-  type="success"
-  message="Payment successful!"
-  description="Your order #12345 has been confirmed"
-  position="top"
-  duration={10000}
-  showCloseButton={true}
-  backgroundColor="#10b981"
-  textColor="#ffffff"
-  fontSize={16}
-  borderRadius={12}
-  showProgress={true}
-  icon="🎉"
-  onHide={() => setShowToast(false)}
-/>
-
-// Swipe-to-dismiss toast (no close button)
-<NToast
-  isVisible={showToast}
-  type="info"
-  message="Swipe to dismiss"
-  description="Drag this toast down to close it"
-  showCloseButton={false}
-  swipeToDismiss={true}
-  onHide={() => setShowToast(false)}
-/>
-
-// Toast with custom icon
-<NToast
-  isVisible={showToast}
-  type="success"
-  message="Welcome back!"
-  icon={<CustomIcon />}
-  showDefaultIcon={false}
-  onHide={() => setShowToast(false)}
-/>
-```
-
-### NToast Props
+**Main Props**
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `isVisible` | `boolean` | `false` | Whether the toast is visible |
-| `type` | `'success' \| 'error' \| 'warning' \| 'info'` | `'success'` | Toast type (determines color and icon) |
-| `message` | `string` | **required** | Main toast message |
-| `description` | `string` | `undefined` | Optional detailed description |
-| `position` | `'top' \| 'bottom'` | `'bottom'` | Toast position on screen |
-| `duration` | `number` | `8000` | Auto-hide duration in ms (0 = no auto-hide) |
-| `showCloseButton` | `boolean` | `false` | Show close button |
-| `showProgress` | `boolean` | `true` | Show progress indicator |
-| `showDefaultIcon` | `boolean` | `true` | Show default type icon |
-| `icon` | `React.ReactNode` | `undefined` | Custom icon (overrides default) |
-| `backgroundColor` | `string` | Auto (based on type) | Custom background color |
-| `textColor` | `string` | Auto (based on type) | Custom text color |
-| `fontSize` | `number` | `15` | Message font size |
-| `descriptionFontSize` | `number` | `13` | Description font size |
-| `borderRadius` | `number` | `12` | Border radius in pixels |
-| `padding` | `string` | `'16px'` | Toast padding |
-| `width` | `string` | `'auto'` | Toast width |
-| `maxWidth` | `string` | `'400px'` | Maximum toast width |
-| `swipeToDismiss` | `boolean` | `true` | Enable swipe-to-dismiss |
-| `animationDuration` | `number` | `0.3` | Animation duration in seconds |
-| `offset` | `number` | `20` | Distance from screen edge |
-| `zIndex` | `number` | `9999` | Z-index for stacking |
-| `className` | `string` | `''` | Custom CSS class |
-| `style` | `React.CSSProperties` | `undefined` | Custom inline styles |
-| `onHide` | `() => void` | `undefined` | Callback when toast hides |
-| `onShow` | `() => void` | `undefined` | Callback when toast shows |
+| items | BottomNavItem[] | required | Navigation items |
+| activeId | string | required | Active item ID |
+| onItemClick | (item) => void | required | Item click handler |
+| variant | 'default' \| 'filled' \| 'minimal' \| 'floating' | default | Style variant |
+| size | 'small' \| 'medium' \| 'large' | medium | Size of navigation |
 
-## 🎯 **Advanced Customization Examples**
+**Styling Props**
 
+| Prop | Type | Default |
+|------|------|---------|
+| backgroundColor | string | #ffffff |
+| activeColor | string | #007aff |
+| inactiveColor | string | #8e8e93 |
+| borderRadius | number \| string | 0 |
+| roundedTop | number | undefined |
+| height | number \| string | undefined |
 
-### Per-Item Custom Styling
+---
 
+### NActionSheet
+Action sheet modal for presenting a list of actions.
+
+Basic usage:
 ```jsx
-const customNavItems = [
-  { 
-    id: 'home', 
-    label: 'Home', 
-    icon: '🏠',
-    iconColor: '#4CAF50',
-    activeIconColor: '#ffffff',
-    textColor: '#4CAF50',
-    activeTextColor: '#ffffff',
-    activeBackgroundColor: '#4CAF50',
-    textStyle: { fontWeight: 'bold' }
-  },
-  { 
-    id: 'shop', 
-    label: 'Shop', 
-    icon: '🛍️',
-    iconColor: '#FF9800',
-    activeIconColor: '#ffffff',
-    textColor: '#FF9800',
-    activeTextColor: '#ffffff',
-    activeBackgroundColor: '#FF9800',
-    badge: 'NEW'
-  },
-  // ... more items
-];
-
-<NBottomNav
-  items={customNavItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  backgroundColor="#ffffff"
-  borderRadius={16}
-  itemGap={8}
-  iconSize={22}
-  fontSize={10}
-  fontWeight={600}
-/>
-```
-
-### React Component Icons with Active States
-
-```jsx
-import { HomeIcon, SearchIcon, HeartIcon, UserIcon } from 'lucide-react';
-
-const iconNavItems = [
-  { 
-    id: 'home', 
-    label: 'Home', 
-    icon: <HomeIcon size={20} />,
-    activeIcon: <HomeIcon size={20} color="#007aff" />
-  },
-  { 
-    id: 'search', 
-    label: 'Search', 
-    icon: <SearchIcon size={20} />,
-    activeIcon: <SearchIcon size={20} color="#007aff" />
-  },
-  { 
-    id: 'favorites', 
-    label: 'Favorites', 
-    icon: <HeartIcon size={20} />,
-    activeIcon: <HeartIcon size={20} color="#ff3b30" />,
-    badge: 5 
-  },
-  { 
-    id: 'profile', 
-    label: 'Profile', 
-    icon: <UserIcon size={20} />,
-    activeIcon: <UserIcon size={20} color="#007aff" />
-  },
-];
-```
-
-### SVG Images with Local Assets
-
-```jsx
-const svgNavItems = [
-  { 
-    id: 'home', 
-    label: 'Home', 
-    icon: '/assets/home.svg',
-    activeIcon: '/assets/home-active.svg' // Optional different active state
-  },
-  { 
-    id: 'search', 
-    label: 'Search', 
-    icon: '/assets/search.svg' 
-  },
-  { 
-    id: 'favorites', 
-    label: 'Favorites', 
-    icon: '/assets/favorites.svg',
-    badge: 3,
-    // Custom colors will apply filter effects to SVG images
-    iconColor: '#6b7280',
-    activeIconColor: '#ef4444'
-  },
-  { 
-    id: 'profile', 
-    label: 'Profile', 
-    icon: '/assets/profile.svg'
-  },
-];
-
-<NBottomNav
-  items={svgNavItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  iconSize={24}
-  activeColor="#007aff"
-/>
-```
-
-### Advanced Click Animations
-
-```jsx
-// Pulse animation on icon click
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  clickAnimation="pulse"
-  animationDuration={200}
-  hapticFeedback={true}
-/>
-
-// Scale bounce animation for icons
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  clickAnimation="scale-bounce"
-  animationDuration={300}
-  animation="scale"
-/>
-
-// Shake effect for icons (great for error states)
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  clickAnimation="shake"
-  animationDuration={200}
-/>
-
-// Rotate animation on icons with haptic feedback
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  clickAnimation="rotate"
-  animationDuration={300}
-  hapticFeedback={true}
-  activeColor="#ff6b6b"
-/>
-
-// Ripple effect for icons (Material Design style)
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={(item) => setActiveTab(item.id)}
-  clickAnimation="ripple"
-  animationDuration={400}
-  variant="filled"
-/>
-```
-
-### Professional App Style (Clean & Minimal)
-
-```jsx
-const professionalNavItems = [
-  { 
-    id: 'home', 
-    label: 'Home', 
-    icon: <HomeIcon />,
-    iconColor: '#6b7280',
-    activeIconColor: '#1f2937',
-    textColor: '#6b7280',
-    activeTextColor: '#1f2937'
-  },
-  { 
-    id: 'booking', 
-    label: 'Booking', 
-    icon: '📋',
-    iconColor: '#6b7280',
-    activeIconColor: '#1f2937',
-    textColor: '#6b7280',
-    activeTextColor: '#1f2937'
-  },
-  { 
-    id: 'faqs', 
-    label: 'FAQs', 
-    icon: '❓',
-    iconColor: '#6b7280',
-    activeIconColor: '#1f2937',
-    textColor: '#6b7280',
-    activeTextColor: '#1f2937'
-  },
-  { 
-    id: 'profile', 
-    label: 'Profile', 
-    icon: <UserIcon />,
-    iconColor: '#6b7280',
-    activeIconColor: '#1f2937',
-    textColor: '#6b7280',
-    activeTextColor: '#1f2937'
-  },
-];
-
-<NBottomNav
-  items={professionalNavItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  backgroundColor="#ffffff"
-  showDivider={true}
-  animation="none"
-  iconSize={22}
-  fontSize={10}
-  fontWeight={500}
-  style={{ borderTop: '1px solid #e5e7eb' }}
-/>
-```
-
-### Animation Showcase
-
-```jsx
-// Gaming App - High energy animations
-<NBottomNav
-  items={[
-    { id: 'play', label: 'Play', icon: '🎮', iconColor: '#10b981', activeIconColor: '#ffffff' },
-    { id: 'leaderboard', label: 'Rank', icon: '🏆', iconColor: '#f59e0b', activeIconColor: '#ffffff' },
-    { id: 'inventory', label: 'Items', icon: '🎒', badge: 'NEW', iconColor: '#8b5cf6', activeIconColor: '#ffffff' },
-    { id: 'profile', label: 'Profile', icon: '👤', iconColor: '#6b7280', activeIconColor: '#ffffff' }
+<NActionSheet
+  actions={[
+    { id: 'delete', label: 'Delete', destructive: true },
+    { id: 'share', label: 'Share' },
+    { id: 'cancel', label: 'Cancel', cancel: true },
   ]}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  variant="filled"
-  clickAnimation="rotate"
-  animation="bounce"
-  hapticFeedback={true}
-  backgroundColor="#1f2937"
-  activeColor="#ffffff"
-  borderRadius={16}
-/>
-
-// Banking App - Subtle and professional
-<NBottomNav
-  items={financialNavItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  clickAnimation="pulse"
-  animation="none"
-  backgroundColor="#ffffff"
-  activeColor="#059669"
-  className="border-t border-gray-200"
-/>
-
-// Social Media App - Engaging interactions
-<NBottomNav
-  items={socialNavItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  variant="floating"
-  clickAnimation="scale-bounce"
-  animation="slide"
-  topShadow={true}
-  hapticFeedback={true}
-  backgroundColor="rgba(255,255,255,0.95)"
-  activeColor="#ec4899"
-  className="rounded-full mx-4 mb-4"
+  onActionSelect={(action) => console.log('Selected action:', action.id)}
+  onClose={() => setShowActionSheet(false)}
+  isVisible={showActionSheet}
 />
 ```
 
-### Tailwind CSS Integration
+---
 
-The component is designed for mobile-first layouts with automatic centering:
+### NBottomSheet
+Slide‑up bottom sheet with backdrop; mobile-first, touch-friendly, and draggable.
 
+Basic usage:
 ```jsx
-// Mobile-focused navigation with rounded corners
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  className="rounded-t-2xl bg-white/90 backdrop-blur-md"
-  topShadow={true}
-  clickAnimation="pulse"
-/>
-
-// Custom max width with Tailwind
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  className="max-w-sm rounded-2xl bg-gray-900/80"
-  variant="floating"
-  clickAnimation="ripple"
-  hapticFeedback={true}
-/>
-
-// Different mobile widths
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  className="max-w-xs rounded-full bg-blue-500/90"  // Narrow mobile
-/>
-
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  className="max-w-lg rounded-xl bg-purple-600/80"  // Wider mobile
-/>
+<NBottomSheet open={open} onClose={() => setOpen(false)} height="60vh">
+  <div>Your content here</div>
+</NBottomSheet>
 ```
 
-**Note**: The navigation automatically centers itself and maintains mobile-friendly proportions on all screen sizes.
+**Key props:** `open`, `onClose`, `height`, `backdrop`, `closeOnBackdrop`, `draggable`.
 
-## 🔧 **Complete Props API**
+For the full API and additional examples, see **[API Reference](./docs/API.md#nbottomsheet)** and **[Examples](./docs/EXAMPLES.md#nbottomsheet)**.
 
-### LoadingComponent Props
+---
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `visible` | `boolean` | `true` | Whether the loading component is visible |
-| `size` | `number` | `80` | Size of the loading spinner (in pixels) |
-| `spinnerColor` | `string` | `'#8B4513'` | Color of the loading spinner |
-| `speed` | `number` | `2` | Speed of the loading animation (in seconds) |
-| `logo` | `React.ReactNode \| string` | `'https://www.example.com/img/logo-master.png'` | Logo/image to display in center |
-| `logoSize` | `number` | `40` | Size of the center logo/image (in pixels) |
-| `backgroundColor` | `string` | `'#ffffff'` | Background color of the loading overlay |
-| `backgroundOpacity` | `number` | `0.9` | Opacity of the background overlay |
-| `loadingText` | `string` | `undefined` | Text to display below the spinner |
-| `textColor` | `string` | `'#666666'` | Custom text color |
-| `textSize` | `number` | `14` | Font size of the loading text |
-| `strokeWidth` | `number` | `3` | Thickness of the spinner stroke |
-| `fullscreen` | `boolean` | `true` | Whether to show as fullscreen overlay |
-| `zIndex` | `number` | `9999` | Z-index for the loading overlay |
-| `className` | `string` | `''` | Additional CSS classes |
-| `style` | `React.CSSProperties` | `undefined` | Custom styles |
+### Overlay
+Lightweight overlay and backdrop component used by sheets and action sheets. It provides a small API to render a backdrop, handle backdrop clicks, and host portal content.
 
-### NBottomNav Props
-
-#### Main Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `items` | `BottomNavItem[]` | **required** | Array of navigation items |
-| `activeId` | `string` | **required** | Currently active item ID |
-| `onItemClick` | `(item: BottomNavItem) => void` | **required** | Item click handler |
-| `variant` | `'default' \| 'filled' \| 'minimal' \| 'floating'` | `'default'` | Navigation style variant |
-| `size` | `'small' \| 'medium' \| 'large'` | `'medium'` | Size of navigation bar |
-
-### Styling Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `backgroundColor` | `string` | `'#ffffff'` | Navigation background color |
-| `activeColor` | `string` | `'#007aff'` | Default color for active items |
-| `inactiveColor` | `string` | `'#8e8e93'` | Default color for inactive items |
-| `borderRadius` | `number \| string` | `0` | Border radius for navigation bar |
-| `roundedTop` | `number` | `undefined` | Top border radius (4=sm, 8=md, 12=lg, 16=xl, 20=2xl, 24=3xl) |
-| `boxShadow` | `string` | `undefined` | Custom shadow/elevation |
-| `height` | `number \| string` | `undefined` | Height of navigation bar |
-| `padding` | `number \| string` | `undefined` | Padding for entire navigation |
-| `itemGap` | `number \| string` | `undefined` | Gap between navigation items |
-| `borderWidth` | `number \| string` | `undefined` | Border width |
-| `borderColor` | `string` | `undefined` | Border color |
-
-### Typography Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `fontFamily` | `string` | `system-ui` | Text font family |
-| `fontSize` | `number \| string` | `10px` | Text font size |
-| `fontWeight` | `number \| string` | `500` | Text font weight |
-| `iconSize` | `number \| string` | `20px` | Icon size |
-| `topShadow` | `boolean` | `true` | Add top shadow/blur effect above navigation |
-| `topShadowStyle` | `TopShadowStyle` | `undefined` | Custom top shadow styling |
-
-### Badge Styling
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `badgeStyle` | `BadgeStyle` | Comprehensive badge styling options |
-
-```typescript
-interface BadgeStyle {
-  backgroundColor?: string;         // Badge background color
-  textColor?: string;              // Badge text color
-  borderRadius?: number | string;   // Badge border radius
-  fontSize?: number | string;       // Badge font size
-  fontWeight?: number | string;     // Badge font weight
-  border?: string;                 // Complete border shorthand
-  borderColor?: string;            // Border color only
-  borderWidth?: number | string;   // Border width only
-  minWidth?: number | string;      // Minimum badge width
-  height?: number | string;        // Badge height
-  padding?: string;               // Badge padding
-  position?: 'top-right' | 'top-left' | 'top-center' | 'bottom-right' | 'bottom-left';
-  offset?: {                      // Fine-tune badge position
-    top?: number | string;
-    right?: number | string;
-    bottom?: number | string;
-    left?: number | string;
-  };
-  boxShadow?: string;             // Badge shadow/elevation
-  transform?: string;             // Custom transform
-  zIndex?: number;               // Stack order
-}
-```
-
-### Advanced Badge Examples
-
+Basic usage:
 ```jsx
-// Custom border and positioning
-<NBottomNav
-  items={[
-    { 
-      id: 'messages', 
-      label: 'Messages', 
-      icon: '💬', 
-      badge: '12',
-    }
-  ]}
-  badgeStyle={{
-    backgroundColor: '#ff0000',
-    border: '2px solid #ffffff',
-    borderRadius: '12px',
-    fontSize: '11px',
-    fontWeight: 'bold',
-    boxShadow: '0 2px 8px rgba(255,0,0,0.3)'
-  }}
-/>
+import { Overlay } from 'prebuilt-components';
 
-// Different positions and custom styling
-<NBottomNav
-  items={[
-    { id: 'home', label: 'Home', icon: '🏠', badge: '!' },
-    { id: 'shop', label: 'Shop', icon: '🛍️', badge: 'NEW' },
-    { id: 'cart', label: 'Cart', icon: '🛒', badge: '3' },
-  ]}
-  badgeStyle={{
-    position: 'top-left',
-    backgroundColor: '#10b981',
-    textColor: '#ffffff',
-    borderRadius: '4px',
-    padding: '2px 6px',
-    fontSize: '9px',
-    fontWeight: '600',
-    offset: {
-      top: '-8px',
-      left: '-8px'
-    }
-  }}
-/>
-
-// Floating badge with gradient
-<NBottomNav
-  items={navItems}
-  badgeStyle={{
-    background: 'linear-gradient(45deg, #ff6b6b, #4ecdc4)',
-    border: '1px solid rgba(255,255,255,0.3)',
-    borderRadius: '50%',
-    minWidth: '20px',
-    height: '20px',
-    fontSize: '10px',
-    fontWeight: 'bold',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
-    position: 'bottom-right',
-    offset: { bottom: '-4px', right: '-4px' }
-  }}
-/>
+<Overlay open={open} backdrop onClose={() => setOpen(false)}>
+  <div style={{ maxWidth: 520, margin: '0 auto', background: '#fff', borderRadius: 8, padding: 20 }}>
+    <h3>Modal title</h3>
+    <p>Modal content goes here.</p>
+  </div>
+</Overlay>
 ```
 
-### Feature Props
+**Key props:** `open`, `backdrop`, `closeOnBackdrop`, `onClose`, `className`, `portalClassName`, `style`.
+
+---
+
+### NEmptyState
+Simple empty state component with title, description, and optional illustration.
+Basic usage:
+```jsx
+<NEmptyState title="No items" description="Check back later." />
+```
+
+---
+
+### NToast
+Lightweight toast notifications.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `showLabels` | `boolean` | `true` | Whether to show item labels |
-| `hapticFeedback` | `boolean` | `false` | Enable haptic feedback |
-| `safeAreaPadding` | `boolean` | `true` | Add safe area padding |
-| `showDivider` | `boolean` | `true` | Show top divider line |
-| `animation` | `'scale' \| 'bounce' \| 'slide' \| 'none'` | `'scale'` | Active state animation |
-| `clickAnimation` | `'pulse' \| 'ripple' \| 'scale-bounce' \| 'shake' \| 'rotate' \| 'none'` | `'pulse'` | Icon-only click interaction animation |
-| `animationDuration` | `number` | `200` | Animation duration in milliseconds |
+| isVisible | boolean | false | Toast visibility |
+| type | 'success' \| 'error' \| 'warning' \| 'info' | success | Toast type |
+| message | string | required | Message text |
+| duration | number | 8000 | Auto-hide duration |
+| position | 'top' \| 'bottom' | bottom | Screen position |
+| onHide | () => void | — | Hide callback |
 
-### Badge Styling
+---
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `badgeStyle` | `BadgeStyle` | Custom badge styling |
+### NLoadingComponent
+Fullscreen or inline loading indicator.
 
-```typescript
-interface BadgeStyle {
-  backgroundColor?: string;
-  textColor?: string;
-  borderRadius?: number | string;
-  fontSize?: number | string;
-}
-```
+| Prop | Type | Default |
+|------|------|---------|
+| visible | boolean | true |
+| size | number | 80 |
+| spinnerColor | string | #8B4513 |
+| fullscreen | boolean | true |
 
-### Top Shadow Styling
+---
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `topShadowStyle` | `TopShadowStyle` | Custom top shadow styling |
+### NSplashScreen
+Professional splash screen with branding.
 
-```typescript
-interface TopShadowStyle {
-  height?: number | string;        // Height of the shadow area
-  blur?: number | string;          // Blur amount
-  color?: string;                  // Shadow color
-  opacity?: number;                // Shadow opacity
-}
-```
-
-## 📱 **Enhanced BottomNavItem Interface**
-
-```typescript
-interface BottomNavItem {
-  id: string;                           // Unique identifier
-  label: string;                        // Display label
-  icon?: React.ReactNode | string;      // Icon (emoji, SVG path, or React component)
-  activeIcon?: React.ReactNode | string; // Different icon for active state
-  badge?: string | number;              // Notification badge
-  disabled?: boolean;                   // Disabled state
-  
-  // Per-item color customization
-  iconColor?: string;                   // Custom icon color (applies filter to images)
-  activeIconColor?: string;             // Custom active icon color (applies filter to images)
-  textColor?: string;                   // Custom text color
-  activeTextColor?: string;             // Custom active text color
-  backgroundColor?: string;             // Custom background color
-  activeBackgroundColor?: string;       // Custom active background color
-  
-  // Per-item styling
-  textStyle?: React.CSSProperties;      // Custom text styles
-  iconStyle?: React.CSSProperties;      // Custom icon styles
-  
-  // Extensible - allows additional custom properties
-  [key: string]: any;                   // For custom extensions like 'route', 'url', etc.
-}
-```
-
-**Icon Support:**
-- **Emoji**: `icon: "🏠"`
-- **SVG Images**: `icon: "/assets/home.svg"`
-- **PNG/JPG Images**: `icon: "/images/home.png"`
-- **React Components**: `icon: <HomeIcon size={20} />`
-
-## 🌟 **NSplashScreen Component**
-
-Perfect for Mini Apps! Create professional splash screens with logo and company branding.
-
-### Basic Usage
-
-```jsx
-import { NSplashScreen } from 'prebuilt-components';
-
-function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  return (
-    <>
-      <NSplashScreen
-        isVisible={showSplash}
-        duration={3000}
-        onHide={() => setShowSplash(false)}
-      />
-      {/* Your main app content */}
-    </>
-  );
-}
-```
-
-### Custom Branding
-
+Basic usage:
 ```jsx
 <NSplashScreen
   isVisible={showSplash}
-  duration={4000}
-  logoSrc="/your-logo.png"
-  logoWidth={150}
-  logoHeight={150}
-  companyName="Your Company Name"
-  backgroundColor="#f8f9fa"
-  logoAnimation="bounce"
+  duration={3000}
   onHide={() => setShowSplash(false)}
 />
 ```
 
-### Advanced Customization
 
-```jsx
-<NSplashScreen
-  isVisible={showSplash}
-  logoSrc="/assets/app-logo.svg"
-  logoWidth={180}
-  logoHeight={120}
-  powerByText="Powered by Your Brand"
-  powerByColor="#007bff"
-  powerByFontSize={16}
-  backgroundColor="#ffffff"
-  logoAnimation="slideUp"
-  animationDuration={1.5}
-  logoStyle={{
-    borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-  }}
-  onHide={() => setShowSplash(false)}
-/>
-```
 
-### NSplashScreenProps
+## 🤝 Contributing
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `isVisible` | `boolean` | `true` | Whether splash screen is visible |
-| `duration` | `number` | `3000` | Auto-hide duration in ms (0 = manual) |
-| `onHide` | `() => void` | `undefined` | Callback when hiding |
-| `logoSrc` | `string` | `placeholder` | Logo image URL |
-| `logoAlt` | `string` | `'App Logo'` | Logo alt text |
-| `logoWidth` | `number` | `120` | Logo width in pixels |
-| `logoHeight` | `number` | `120` | Logo height in pixels |
-| `companyName` | `string` | `'ABC Co., Ltd'` | Company name for "Power by" |
-| `backgroundColor` | `string` | `'#ffffff'` | Background color |
-| `logoStyle` | `CSSProperties` | `undefined` | Custom logo styling |
-| `powerByColor` | `string` | `'#666666'` | Power by text color |
-| `powerByFontSize` | `number` | `14` | Power by font size |
-| `powerByText` | `string` | `undefined` | Custom power by text |
-| `logoAnimation` | `'fadeIn' \| 'slideUp' \| 'bounce' \| 'none'` | `'fadeIn'` | Logo animation type |
-| `animationDuration` | `number` | `1` | Animation duration in seconds |
-| `className` | `string` | `''` | Custom CSS class |
-| `style` | `CSSProperties` | `undefined` | Custom styling |
-| `zIndex` | `number` | `9999` | Z-index for positioning |
+Contributions are welcome!  
+Please open an issue or submit a pull request.
 
-## 🎨 **Complete Styling Examples**
+---
 
-### Dark Theme
+## 📄 License
 
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  backgroundColor="#2d3748"
-  activeColor="#63b3ed"
-  inactiveColor="#a0aec0"
-  borderRadius={12}
-/>
-```
+MIT © **MAIBUNHENG**
 
-### Colorful Gradient
+---
 
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  backgroundColor="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-  activeColor="#ffffff"
-  inactiveColor="rgba(255,255,255,0.7)"
-  borderRadius={20}
-  height={60}
-  style={{ 
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-  }}
-/>
-```
+## 📝 Changelog
 
-### Custom Heights & Spacing
-
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  height={70}
-  itemGap={20}
-  iconSize={28}
-  fontSize={12}
-  fontWeight={700}
-  backgroundColor="#ffffff"
-  activeColor="#e53e3e"
-  borderRadius="20px 20px 0 0"
-  boxShadow="0 -8px 30px rgba(229, 62, 62, 0.2)"
-/>
-```
-
-### Icons Only (No Labels)
-
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  showLabels={false}
-  iconSize={26}
-  backgroundColor="#ffffff"
-  borderRadius={16}
-/>
-```
-
-### Top Rounded Corners (Tailwind-like)
-
-```jsx
-// Small rounded top (4px)
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  roundedTop={4}
-  backgroundColor="#ffffff"
-/>
-
-// Medium rounded top (8px) 
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  roundedTop={8}
-  backgroundColor="#ffffff"
-/>
-
-// Large rounded top (12px)
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  roundedTop={12}
-  backgroundColor="#ffffff"
-/>
-
-// Extra large rounded top (16px) - like Tailwind rounded-t-2xl
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  roundedTop={16}
-  backgroundColor="#ffffff"
-/>
-
-// 2XL rounded top (20px)
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  roundedTop={20}
-  backgroundColor="#ffffff"
-/>
-
-// 3XL rounded top (24px)
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  roundedTop={24}
-  backgroundColor="#ffffff"
-/>
-```
-
-## 🔄 **React Router Integration**
-
-Perfect integration with React Router for single-page applications:
-
-```jsx
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { BottomNav, BottomNavItem } from "prebuilt-components";
-import 'prebuilt-components/dist/index.css'; // ✅ Import CSS
-
-function AppContent() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Determine active tab based on current route
-  const getActiveTab = () => {
-    switch (location.pathname) {
-      case "/":
-        return "home";
-      case "/booking":
-        return "booking";
-      case "/faq":
-        return "faq";
-      case "/profile":
-        return "profile";
-      default:
-        return "home";
-    }
-  };
-
-  // Navigation items with route property (extensible interface)
-  const navItems: BottomNavItem[] = [
-    {
-      id: "home",
-      label: "Home",
-      icon: "/home.svg",
-      activeIcon: "/ahome.svg",
-      iconColor: "#4C4C4C",
-      activeIconColor: "#6F5D29",
-      route: "/", // Custom property - works thanks to [key: string]: any
-    },
-    {
-      id: "booking",
-      label: "Booking",
-      icon: "/booking.svg",
-      activeIcon: "/abooking.svg",
-      iconColor: "#4C4C4C",
-      activeIconColor: "#6F5D29",
-      badge: "3",
-      route: "/booking", // Custom property
-    },
-    {
-      id: "faq",
-      label: "FAQ",
-      icon: "/faq.svg",
-      activeIcon: "/afaq.svg",
-      iconColor: "#4C4C4C",
-      activeIconColor: "#6F5D29",
-      route: "/faq",
-    },
-    {
-      id: "profile",
-      label: "Profile",
-      icon: "/profile.svg",
-      iconColor: "#4C4C4C",
-      activeIconColor: "#6F5D29",
-      activeIcon: "/aprofile.svg",
-      route: "/profile",
-    },
-  ];
-
-  const handleNavClick = (item: BottomNavItem) => {
-    if (item.route) {
-      navigate(item.route);
-    }
-  };
-
-  return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/booking" element={<Booking />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/profile" element={<Profile />} />
-        </Routes>
-      </main>
-
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 max-w-md w-full">
-        <NBottomNav
-          items={navItems}
-          activeId={getActiveTab()}
-          onItemClick={handleNavClick}
-          activeColor="#6F5D29"
-          inactiveColor="#A3A3A3"
-          roundedTop={16}
-        />
-      </div>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
-  );
-}
-```
-
-## 📱 **Mini App Integrations**
-
-### Telegram Mini Apps
-
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleNavigation}
-  backgroundColor="var(--tg-theme-bg-color)"
-  activeColor="var(--tg-theme-button-color)"
-  inactiveColor="var(--tg-theme-hint-color)"
-  className="rbn-bottom-nav--telegram"
-/>
-```
-
-### WeChat Mini Programs
-
-```jsx
-<NBottomNav
-  items={navItems}
-  activeId={activeTab}
-  onItemClick={handleNavigation}
-  activeColor="#07c160"
-  hapticFeedback={true}
-  className="rbn-bottom-nav--wechat"
-/>
-```
-
-### E-commerce App Example
-
-```jsx
-<NBottomNav
-  items={[
-    { id: 'shop', label: 'Shop', icon: '🛍️' },
-    { id: 'cart', label: 'Cart', icon: '🛒', badge: '3' },
-    { id: 'orders', label: 'Orders', icon: '📦' },
-    { id: 'account', label: 'Account', icon: '👤' },
-  ]}
-  activeId={activeTab}
-  onItemClick={handleClick}
-  hapticFeedback={true}
-  activeColor="#ff6b6b"
-  backgroundColor="#ffffff"
-  borderRadius={16}
-/>
-```
-
-## ♿ **Accessibility**
-
-- ✅ **ARIA Attributes** - Proper roles and labels
-- ✅ **Keyboard Navigation** - Full keyboard support
-- ✅ **Screen Reader** - Compatible with assistive technology
-- ✅ **Focus Management** - Clear focus indicators
-- ✅ **Touch Targets** - Minimum 44px touch areas
-
-## 🎯 **Performance**
-
-- ✅ **Lightweight** - < 15KB gzipped
-- ✅ **Zero Dependencies** - Only React peer dependency
-- ✅ **Tree Shakeable** - Import only what you need
-- ✅ **CSS Variables** - Efficient theme switching
-- ✅ **GPU Accelerated** - Smooth animations
-
-## 🌐 **Browser Support**
-
-- ✅ iOS Safari ≥ 12
-- ✅ Chrome ≥ 60
-- ✅ Firefox ≥ 60
-- ✅ Samsung Internet ≥ 8
-- ✅ Edge ≥ 79
-
-## 📝 **Full TypeScript Support**
-
-```typescript
-import { BottomNav, BottomNavProps, BottomNavItem } from 'prebuilt-components';
-import 'prebuilt-components/dist/index.css'; // ✅ Import CSS
-
-// Extended interface for React Router integration
-interface NavItemWithRoute extends BottomNavItem {
-  route: string; // Required route property
-}
-
-const MyNav: React.FC<{ items: BottomNavItem[] }> = ({ items }) => {
-  return (
-    <NBottomNav
-      items={items}
-      activeId="home"
-      onItemClick={(item) => {
-        // Full type safety with all customization options
-        console.log(item.iconColor, item.activeBackgroundColor);
-        
-        // Access custom properties (type-safe with casting)
-        const routeItem = item as NavItemWithRoute;
-        if (routeItem.route) {
-          console.log('Navigate to:', routeItem.route);
-        }
-      }}
-      // Complete IntelliSense for all styling props
-      borderRadius={16}
-      iconSize={24}
-      badgeStyle={{ backgroundColor: '#ff4757' }}
-    />
-  );
-};
-
-// Alternative: Direct typing with custom properties
-const navItemsWithRoutes: NavItemWithRoute[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    icon: '/home.svg',
-    route: '/', // Type-safe custom property
-  },
-  // ... more items
-];
-```
-
-## 🤝 **Contributing**
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 **License**
-
-MIT © [MAIBUNHENG] 
-
-## 🚀 **Changelog**
-
-### 1.0.0 - Initial Release
-- **🎉 PACKAGE NAME**: `prebuilt-components`
-- **✨ COMPONENTS**: NBottomNav, NLoadingComponent, NSplashScreen, NToast
-- **NBottomNav Features**:
-  - Per-item color customization (`iconColor`, `activeIconColor`, `textColor`, `activeTextColor`)
-  - Per-item background colors (`backgroundColor`, `activeBackgroundColor`)
-  - Dual icon support with `activeIcon` for different active/inactive states
-  - Per-item styling with `textStyle` and `iconStyle` props
-  - `floating` variant with modern blur effect design
-  - Advanced typography controls (`fontFamily`, `fontSize`, `fontWeight`, `iconSize`)
-  - Custom `badgeStyle` configuration
-  - Layout controls (`itemGap`, `borderRadius`, `height`, `padding`)
-  - `roundedTop` prop for Tailwind-like top border radius
-  - Click animations: pulse, ripple, scale-bounce, shake, rotate
-  - React Router integration support
-- **NLoadingComponent Features**:
-  - Circular spinner with customizable size, color, and speed
-  - Center logo support (image URL or React component)
-  - Optional semi-transparent circular background with opacity control
-  - Fullscreen overlay mode
-  - Custom loading text and styling
-- **NSplashScreen Features**:
-  - Auto-hide with configurable duration
-  - Custom logo and company branding
-  - Multiple animation types: fadeIn, slideUp, bounce
-  - Fully customizable styling
-- **NToast Features**:
-  - Beautiful toast notifications with 4 types: success, error, warning, info
-  - Swipe-to-dismiss functionality
-  - Auto-dismiss with progress indicator
-  - Custom icons with pop animations
-  - Description support for detailed messages
-  - Position control: top or bottom
-  - Customizable colors, sizes, and styles
-- **General**:
-  - Full TypeScript support with comprehensive type definitions
-  - Zero dependencies (only React peer dependency)
-  - Accessibility features (ARIA attributes, keyboard navigation)
-  - Dark mode support
-  - Mobile-first responsive design
-  - Mini App optimizations (Telegram, WeChat)
-  - Safe area support for iOS devices
-  - Haptic feedback support
-
+See GitHub releases for full change history.
