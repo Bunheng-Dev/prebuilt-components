@@ -62,6 +62,21 @@ type NChatBotUiCard = {
   link?: string;
 };
 
+type NChatBotStoredMessage = {
+  id: string;
+  role: 'user' | 'ai' | 'system';
+  content: string;
+  sources?: any;
+  ui?: any;
+  timestamp?: string;
+};
+
+type SourceDisplay = {
+  label: string;
+  title: string;
+  url?: string;
+};
+
 export interface NNChatBotProps {
   /** The API endpoint to call when a user submits a message (required) */
   apiEndpoint: string;
@@ -183,6 +198,172 @@ const defaultQuickActions: NNChatBotQuickAction[] = [
   { id: 'talk-to-agent', label: 'Talk To Agent', prompt: 'Talk to Agent', actionType: 'live_chat' },
 ];
 
+const STORAGE_KEY = 'siem_reap_chat_history';
+const CONTEXT_KEY = 'siem_reap_last_context';
+const LIST_CONTEXT_KEY = 'siem_reap_last_list_context';
+
+function getStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readFromStorage(key: string): string | null {
+  const storage = getStorage();
+  if (!storage) return null;
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeToStorage(key: string, value: string): void {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function removeFromStorage(key: string): void {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.removeItem(key);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function toStoredMessage(message: NNChatBotMessage): NChatBotStoredMessage | null {
+  if (!message) return null;
+  if (message.from === 'system') return null;
+  const role = message.from === 'bot' ? 'ai' : message.from;
+  const content = message.from === 'user' ? (message.displayText ?? message.text) : message.text;
+  const hasContent = Boolean(content && String(content).trim().length);
+  const hasUi = Boolean(message.ui);
+  if (!hasContent && !hasUi) return null;
+
+  return {
+    id: message.id,
+    role,
+    content: content || '',
+    sources: message.sources ?? null,
+    ui: message.ui ?? null,
+    timestamp: message.timestamp,
+  };
+}
+
+function loadChatFromStorage(): NChatBotStoredMessage[] {
+  const raw = readFromStorage(STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveChatToStorage(messages: NNChatBotMessage[]): void {
+  const stored = messages.map(toStoredMessage).filter(Boolean) as NChatBotStoredMessage[];
+  if (stored.length === 0) {
+    removeFromStorage(STORAGE_KEY);
+    return;
+  }
+  writeToStorage(STORAGE_KEY, JSON.stringify(stored));
+}
+
+function mapStoredRole(role?: string): 'user' | 'bot' | 'system' {
+  if (role === 'ai') return 'bot';
+  if (role === 'system') return 'system';
+  return 'user';
+}
+
+function fromStoredMessage(message: NChatBotStoredMessage, index: number): NNChatBotMessage | null {
+  if (!message || typeof message !== 'object') return null;
+  const from = mapStoredRole(message.role);
+  const content = typeof message.content === 'string' ? message.content : '';
+  if (!content && !message.ui) return null;
+
+  return {
+    id: message.id || `restored-${Date.now()}-${index}`,
+    from,
+    text: content,
+    displayText: from === 'user' ? content : undefined,
+    timestamp: message.timestamp,
+    showTimestamp: from !== 'system',
+    sources: Array.isArray(message.sources) ? message.sources : message.sources ? [message.sources] : undefined,
+    ui: message.ui ?? undefined,
+  };
+}
+
+function loadContextFromStorage(): string | null {
+  return readFromStorage(CONTEXT_KEY);
+}
+
+function saveContextToStorage(context: string | null): void {
+  if (context) {
+    writeToStorage(CONTEXT_KEY, context);
+  } else {
+    removeFromStorage(CONTEXT_KEY);
+  }
+}
+
+function loadListContextFromStorage(): any {
+  const raw = readFromStorage(LIST_CONTEXT_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveListContextToStorage(context: any): void {
+  if (context) {
+    writeToStorage(LIST_CONTEXT_KEY, JSON.stringify(context));
+  } else {
+    removeFromStorage(LIST_CONTEXT_KEY);
+  }
+}
+
+function withContextPayload(payload: any, lastSubject: string | null, listContext: any): any {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  const next = { ...payload };
+  if (!Object.prototype.hasOwnProperty.call(next, 'last_subject')) {
+    next.last_subject = lastSubject ?? null;
+  }
+  if (!Object.prototype.hasOwnProperty.call(next, 'list_context')) {
+    next.list_context = listContext ?? null;
+  }
+  return next;
+}
+
+function extractContextSourceName(sources: any): string | null {
+  if (!sources) return null;
+  const list = Array.isArray(sources) ? sources : [sources];
+  if (!list.length) return null;
+  const first = list[0];
+  if (typeof first === 'string') return first;
+  if (first && typeof first === 'object') {
+    if (typeof first.source === 'string') return first.source;
+    if (typeof first.name === 'string') return first.name;
+  }
+  return null;
+}
+
+function isWebishSourceName(name: string): boolean {
+  const cleaned = String(name || '').toLowerCase().trim();
+  return cleaned === 'web' || cleaned === 'wikipedia';
+}
+
 const NChatBot: React.FC<NNChatBotProps> = ({
   apiEndpoint,
   headers = {},
@@ -281,6 +462,9 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [liveChatLoading, setLiveChatLoading] = useState(false);
   const [liveChatError, setLiveChatError] = useState<string | null>(null);
+  const storageReadyRef = useRef(false);
+  const lastContextRef = useRef<string | null>(null);
+  const listContextRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const liveContainerRef = useRef<HTMLDivElement | null>(null);
   const [liveChatMode, setLiveChatMode] = useState<boolean>(false);
@@ -289,12 +473,43 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   );
 
   useEffect(() => {
+    const stored = loadChatFromStorage();
+    if (stored.length > 0) {
+      const restored = stored
+        .map((msg, index) => fromStoredMessage(msg, index))
+        .filter(Boolean) as NNChatBotMessage[];
+      if (restored.length > 0) {
+        setMessages(restored);
+        if (hideQuickActionsAfterSend) {
+          setQuickActionsOpen(!restored.some((m) => m.from === 'user'));
+        }
+      }
+    }
+    lastContextRef.current = loadContextFromStorage();
+    listContextRef.current = loadListContextFromStorage();
+    storageReadyRef.current = true;
+  }, []);
+
+  useEffect(() => {
     // scroll to bottom when messages change
     const target = liveChatMode ? liveContainerRef.current : containerRef.current;
     if (target) {
       target.scrollTop = target.scrollHeight;
     }
   }, [messages, liveChatMessages, loading, liveChatLoading, quickActionsOpen, liveChatMode]);
+
+  useEffect(() => {
+    if (!storageReadyRef.current) return;
+    saveChatToStorage(messages);
+    const lastBot = [...messages].reverse().find((m) => m.from === 'bot' && m.sources && m.sources.length);
+    if (lastBot) {
+      const sourceName = extractContextSourceName(lastBot.sources);
+      if (sourceName && !isWebishSourceName(sourceName) && sourceName !== lastContextRef.current) {
+        lastContextRef.current = sourceName;
+        saveContextToStorage(sourceName);
+      }
+    }
+  }, [messages]);
 
   // Simple formatter that mirrors the `app.js` output formatting (headings, paragraphs, lists, images, links)
   const formatMessageContent = (text?: string) => {
@@ -770,13 +985,14 @@ const NChatBot: React.FC<NNChatBotProps> = ({
 
       // Allow consumer to prepare a payload (e.g. { query }) or fall back to { message, history }
       const payloadBase = { [payloadKey]: text };
-      const payload = preparePayload
+      const payloadRaw = preparePayload
         ? preparePayload(text, [...messages, userMsg])
         : {
             ...payloadBase,
             ...(includeHistory ? { history: historyForPayload } : {}),
             ...(payloadExtras || {}),
           };
+      const payload = withContextPayload(payloadRaw, lastContextRef.current, listContextRef.current);
 
       const res = await fetch(apiEndpoint, {
         method: 'POST',
@@ -860,6 +1076,13 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                 if ((type === 'cards' || type === 'actions') && parsed.data) {
                   setMeta({ ui: parsed });
                 }
+                if (type === 'sources' && Array.isArray(parsed.data)) {
+                  setMeta({ sources: parsed.data });
+                }
+                if (type === 'list_context') {
+                  listContextRef.current = parsed.data || null;
+                  saveListContextToStorage(parsed.data || null);
+                }
               }
 
               if (parsed.sources && Array.isArray(parsed.sources)) {
@@ -935,6 +1158,11 @@ const NChatBot: React.FC<NNChatBotProps> = ({
           '';
         const botText = botTextCandidate || (uiPayload ? '' : 'Sorry, I could not understand the response.');
 
+        const listContext = (data && (data.list_context ?? data.listContext)) ?? undefined;
+        if (listContext !== undefined) {
+          listContextRef.current = listContext || null;
+          saveListContextToStorage(listContext || null);
+        }
         const botMsg: NNChatBotMessage = {
           id: `b-${Date.now()}`,
           from: 'bot',
@@ -1073,6 +1301,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                 const isUser = m.from === 'user';
                 const showAgentMeta = !isUser && (index === 0 || liveChatMessages[index - 1].from === 'user');
                 const displayName = m.name || resolvedLiveChatAgentName;
+                const messageText = !isUser ? addApologyEmoji(m.text) : m.text;
 
                 return (
                   <div key={m.id} className={`msg ${isUser ? 'user' : 'ai'}`}>
@@ -1089,7 +1318,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                     <div className="bubble-wrap">
                       {displayName && showAgentMeta && <div className="msg-sender">{displayName}</div>}
                       <div className="msg-text">
-                        {formatMessageContent(m.text)}
+                        {formatMessageContent(messageText)}
                         {m.timestamp && (
                           <div className="meta in-bubble">{formatTime(m.timestamp)}</div>
                         )}
@@ -1161,7 +1390,8 @@ const NChatBot: React.FC<NNChatBotProps> = ({
               const isSystem = m.from === 'system';
               const showAgentMeta = !isUser && (index === 0 || messages[index - 1].from === 'user');
               const displayName = m.name || resolvedAgentName;
-              const messageText = m.displayText ?? m.text;
+              const rawMessageText = m.displayText ?? m.text;
+              const messageText = !isUser ? addApologyEmoji(rawMessageText) : rawMessageText;
               const uiCards = !isUser ? renderUiCards(m.ui) : null;
               const hasUi = !!uiCards;
               const showThinking = !messageText && !hasUi;
@@ -1196,17 +1426,47 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                       </div>
                     )}
 
-                    {m.sources && m.sources.length > 0 && (
-                      <ul className="sources">
-                        {m.sources.map((s, i) => (
-                          <li key={i} className="source-item">
-                            <button type="button" className="source-btn" title={String(s)}>
-                              <span className="source-btn-label">{String(s)}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    {(() => {
+                      const sourceItems = Array.isArray(m.sources)
+                        ? (m.sources.map((s) => toSourceDisplay(s)).filter(Boolean) as SourceDisplay[])
+                        : [];
+                      if (!sourceItems.length) return null;
+                      return (
+                        <div className="sources-wrap" aria-label="Sources">
+                          <button type="button" className="sources-btn" aria-haspopup="dialog">
+                            <span className="sources-btn-icon" aria-hidden="true">
+                              <FolderIcon />
+                            </span>
+                            <span>Sources</span>
+                            <span className="sources-count">{sourceItems.length}</span>
+                          </button>
+                          <div className="sources-pop" role="dialog" aria-label="Sources">
+                            <div className="sources-pop-title">Sources</div>
+                            <ul className="sources-pop-list">
+                              {sourceItems.map((s, i) => (
+                                <li key={`${s.label}-${i}`} className="sources-pop-item">
+                                  {s.url ? (
+                                    <a
+                                      className="source-chip source-link"
+                                      href={s.url}
+                                      target="_blank"
+                                      rel="noreferrer noopener"
+                                      title={s.title}
+                                    >
+                                      {s.label}
+                                    </a>
+                                  ) : (
+                                    <span className="source-chip" title={s.title}>
+                                      {s.label}
+                                    </span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {uiCards}
                   </div>
@@ -1314,6 +1574,53 @@ function domainLabel(url: string, maxLen = 18): string {
   }
 }
 
+function formatSourceName(source: string): string {
+  if (!source) return '';
+  let s = String(source).replace(/\.txt$/i, '').trim();
+  s = s.replace(/[_\-]+/g, ' ');
+  const parts = s
+    .split(/\s*\/\s*/)
+    .map((part) =>
+      part
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    )
+    .filter(Boolean);
+  return parts.join(' / ');
+}
+
+function toSourceDisplay(source: any): SourceDisplay | null {
+  if (!source) return null;
+  if (typeof source === 'string') {
+    const label = formatSourceName(source) || source;
+    return { label, title: source };
+  }
+  if (typeof source === 'object') {
+    const url = typeof source.url === 'string' ? source.url : '';
+    if (url) {
+      return { label: domainLabel(url) || url, title: url, url };
+    }
+    const rawName =
+      typeof source.source === 'string' ? source.source : typeof source.name === 'string' ? source.name : '';
+    if (rawName) {
+      const label = formatSourceName(rawName) || rawName;
+      return { label, title: rawName };
+    }
+  }
+  return null;
+}
+
+function addApologyEmoji(text?: string): string | undefined {
+  if (!text) return text;
+  const trimmed = text.replace(/\s+$/, '');
+  const isApology = /\bsorry\b/i.test(trimmed) || /\bapolog(?:y|ies|ize|ise)\b/i.test(trimmed);
+  if (!isApology) return text;
+  if (trimmed.includes('🥺')) return text;
+  return `${trimmed} 🥺`;
+}
+
 const ChatBubbleIcon = () => (
   <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
@@ -1370,6 +1677,17 @@ const GridIcon = () => (
 const SendIcon = () => (
   <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M5 12l14-7-4 14-3-5-7-2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+  </svg>
+);
+
+const FolderIcon = () => (
+  <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4 7.5c0-1 .8-1.8 1.8-1.8h4l2 2h6.4c1 0 1.8.8 1.8 1.8v7.7c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V7.5Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
