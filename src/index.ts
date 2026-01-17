@@ -16,3 +16,5 @@ export { default as NActionSheet } from './NActionSheet';
 export type { NActionSheetProps, NActionSheetAction } from './NActionSheet';
 export { default as Overlay } from './Overlay';
 export type { OverlayProps } from './Overlay';
+export { default as NChatBot } from './NChatBot';
+export type { NNChatBotMessage, NNChatBotQuickAction } from './NChatBot';
