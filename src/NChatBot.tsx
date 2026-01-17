@@ -5,6 +5,8 @@ export interface NNChatBotMessage {
   id: string;
   from: 'user' | 'bot' | 'system';
   text: string;
+  /** Optional display-only text shown in the UI */
+  displayText?: string;
   /** Optional display name for the sender */
   name?: string;
   /** ISO timestamp string */
@@ -16,6 +18,47 @@ export interface NNChatBotMessage {
   /** Optional structured UI payload (cards/menu) */
   ui?: any;
 }
+
+export interface NNChatBotQuickAction {
+  id: string;
+  label: string;
+  /** Optional prompt text appended after the command token */
+  prompt?: string;
+  /** Optional message to send; overrides command format when provided */
+  message?: string;
+  /** Optional display-only text shown in the user bubble */
+  displayText?: string;
+  /** Optional image URL for the quick action */
+  image?: string;
+  /** Optional command tag override */
+  commandTag?: string;
+  /** Optional command id override */
+  commandId?: string;
+  /** Optional aria label for the button */
+  ariaLabel?: string;
+}
+
+type NChatBotUiCard = {
+  id?: string | number;
+  title?: string;
+  name?: string;
+  label?: string;
+  description?: string;
+  desc?: string;
+  image?: string;
+  imageUrl?: string;
+  thumbnail?: string;
+  price?: string | number;
+  amount?: string | number;
+  priceUnit?: string;
+  unit?: string;
+  ctaLabel?: string;
+  actionLabel?: string;
+  buttonText?: string;
+  ctaUrl?: string;
+  url?: string;
+  link?: string;
+};
 
 export interface NNChatBotProps {
   /** The API endpoint to call when a user submits a message (required) */
@@ -63,6 +106,22 @@ export interface NNChatBotProps {
   footerText?: string | null;
   /** Optional footer link for the footer text */
   footerLink?: string;
+  /** Key used for the user prompt payload (e.g. "message" or "query") */
+  payloadKey?: 'message' | 'query';
+  /** Additional payload fields merged into the request body */
+  payloadExtras?: Record<string, any>;
+  /** If false, do not include history in the payload */
+  includeHistory?: boolean;
+  /** Optional quick action tiles shown under the greeting */
+  quickActions?: NNChatBotQuickAction[];
+  /** Optional title shown above quick actions */
+  quickActionsTitle?: string;
+  /** Command tag used when building quick action messages */
+  quickActionCommandTag?: string;
+  /** Command id used when building quick action messages */
+  quickActionCommandId?: string;
+  /** If true, hide quick actions after the first user message */
+  hideQuickActionsAfterSend?: boolean;
   /** If true the chat will be positioned fixed at bottom of viewport (sticky footer) */
   stickyFooter?: boolean;
   /** Render a floating action button to open the chat */
@@ -79,7 +138,18 @@ export interface NNChatBotProps {
   headerRounded?: boolean;
   /** Optional inline style for the header */
   headerStyle?: React.CSSProperties;
+  /** Whether to show the card menu label above the carousel */
+  showCardMenuLabel?: boolean;
 }
+
+const defaultQuickActions: NNChatBotQuickAction[] = [
+  { id: 'about-siem-reap', label: 'About Siem Reap' },
+  { id: 'happening-now', label: 'Happening Now' },
+  { id: 'thing-to-do', label: 'Thing To Do' },
+  { id: 'private-villa', label: 'Private Villa' },
+  { id: 'tour-guide', label: 'Tour Guide' },
+  { id: 'talk-to-agent', label: 'Talk To Agent', prompt: 'Talk to Agent' },
+];
 
 const NChatBot: React.FC<NNChatBotProps> = ({
   apiEndpoint,
@@ -103,6 +173,14 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   initialMessage,
   footerText,
   footerLink,
+  payloadKey = 'message',
+  payloadExtras,
+  includeHistory = true,
+  quickActions = defaultQuickActions,
+  quickActionsTitle,
+  quickActionCommandTag = 'UI_CMD',
+  quickActionCommandId = 'SR_SECURE_2026',
+  hideQuickActionsAfterSend = true,
   stickyFooter = false,
   floatButton = false,
   initialOpen = false,
@@ -111,6 +189,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   headerTextColor = '#ffffff',
   headerRounded = true,
   headerStyle,
+  showCardMenuLabel = true,
 }) => {
   const resolvedHeaderLabel = headerLabel ?? title;
   const resolvedHeaderHeadline = headerHeadline === null ? '' : headerHeadline ?? 'Questions? Chat with us!';
@@ -137,13 +216,16 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [quickActionsOpen, setQuickActionsOpen] = useState<boolean>(
+    () => !hideQuickActionsAfterSend || !messages.some((m) => m.from === 'user')
+  );
 
   useEffect(() => {
     // scroll to bottom when messages change
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-  }, [messages, loading]);
+  }, [messages, loading, quickActionsOpen]);
 
   // Simple formatter that mirrors the `app.js` output formatting (headings, paragraphs, lists, images, links)
   const formatMessageContent = (text?: string) => {
@@ -274,13 +356,118 @@ const NChatBot: React.FC<NNChatBotProps> = ({
     }
   };
 
-  const sendMessage = async (text: string) => {
+  const resolvedQuickActions = Array.isArray(quickActions) ? quickActions : [];
+  const hasUserMessage = messages.some((m) => m.from === 'user');
+  const shouldShowQuickActions =
+    resolvedQuickActions.length > 0 && (hideQuickActionsAfterSend ? quickActionsOpen : true);
+
+  const buildQuickActionDisplay = (action: NNChatBotQuickAction) => {
+    return action.displayText || action.prompt || `Want to know ${action.label}`;
+  };
+
+  const buildQuickActionMessage = (action: NNChatBotQuickAction) => {
+    if (action.message) return action.message;
+    const tag = action.commandTag ?? quickActionCommandTag;
+    const id = action.commandId ?? quickActionCommandId;
+    const prompt = action.prompt || `Want to know ${action.label}`;
+    if (!tag || !id) return prompt;
+    return `[${tag}:${id}] ${prompt}`;
+  };
+
+  const handleQuickAction = (action: NNChatBotQuickAction) => {
+    if (loading) return;
+    const fullMessage = buildQuickActionMessage(action);
+    const displayText = buildQuickActionDisplay(action);
+    sendMessage(fullMessage, { displayText });
+  };
+
+  const revealQuickActions = () => {
+    if (!resolvedQuickActions.length) return;
+    setQuickActionsOpen(true);
+  };
+
+  const extractUiCards = (ui: any): NChatBotUiCard[] => {
+    if (!ui) return [];
+    if (Array.isArray(ui)) return ui as NChatBotUiCard[];
+    if (ui.type && typeof ui.type === 'string') {
+      const type = ui.type.toLowerCase();
+      if (type === 'cards' && ui.data && Array.isArray(ui.data.items)) {
+        return ui.data.items as NChatBotUiCard[];
+      }
+    }
+    if (Array.isArray(ui.cards)) return ui.cards as NChatBotUiCard[];
+    if (Array.isArray(ui.items)) return ui.items as NChatBotUiCard[];
+    if (Array.isArray(ui.data)) return ui.data as NChatBotUiCard[];
+    if (ui.data && Array.isArray(ui.data.items)) return ui.data.items as NChatBotUiCard[];
+    return [];
+  };
+
+  const renderUiCards = (ui: any) => {
+    const cards = extractUiCards(ui);
+    if (!cards.length) return null;
+    const menuLabel = ui?.menu || ui?.data?.menu || '';
+    const shouldShowMenuLabel = showCardMenuLabel && menuLabel;
+
+    return (
+      <div className="nchatbot-card-wrap">
+        {shouldShowMenuLabel && <div className="nchatbot-card-menu">{String(menuLabel)}</div>}
+        <div className="nchatbot-card-list" role="list">
+          {cards.map((card, index) => {
+            const title = card.title || card.name || card.label || '';
+            const description = card.description || card.desc || (card as any).short_desc || (card as any).shortDesc || '';
+            const image = card.image || card.imageUrl || card.thumbnail || '';
+            const price = card.price ?? card.amount;
+            const priceUnit = card.priceUnit || card.unit || '';
+            const ctaLabel = card.ctaLabel || card.actionLabel || (card as any).action_button || card.buttonText || 'More';
+            const ctaUrl = card.ctaUrl || card.url || card.link || '';
+
+            return (
+              <div key={card.id ?? `${title}-${index}`} className="nchatbot-card" role="listitem">
+                <div className="nchatbot-card-media">
+                  {image ? <img src={image} alt={title || 'card'} /> : <div className="nchatbot-card-placeholder" />}
+                </div>
+                <div className="nchatbot-card-body">
+                  {title && <div className="nchatbot-card-title">{title}</div>}
+                  {description && <div className="nchatbot-card-desc">{description}</div>}
+                  <div className="nchatbot-card-meta">
+                    {price !== undefined && price !== null && (
+                      <div className="nchatbot-card-price">
+                        {String(price)}
+                        {priceUnit && typeof price !== 'string' ? <span className="nchatbot-card-unit">/{priceUnit}</span> : null}
+                      </div>
+                    )}
+                    {ctaLabel && (
+                      ctaUrl ? (
+                        <a className="nchatbot-card-cta" href={ctaUrl} target="_blank" rel="noreferrer noopener">
+                          {ctaLabel}
+                        </a>
+                      ) : (
+                        <button type="button" className="nchatbot-card-cta">
+                          {ctaLabel}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const sendMessage = async (text: string, options?: { displayText?: string }) => {
     if (!text.trim()) return;
+    if (hideQuickActionsAfterSend) {
+      setQuickActionsOpen(false);
+    }
 
     const userMsg: NNChatBotMessage = {
       id: `u-${Date.now()}`,
       from: 'user',
       text,
+      displayText: options?.displayText ?? text,
       timestamp: new Date().toISOString(),
     };
 
@@ -304,7 +491,14 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       }
 
       // Allow consumer to prepare a payload (e.g. { query }) or fall back to { message, history }
-      const payload = preparePayload ? preparePayload(text, [...messages, userMsg]) : { message: text, history: historyForPayload };
+      const payloadBase = { [payloadKey]: text };
+      const payload = preparePayload
+        ? preparePayload(text, [...messages, userMsg])
+        : {
+            ...payloadBase,
+            ...(includeHistory ? { history: historyForPayload } : {}),
+            ...(payloadExtras || {}),
+          };
 
       const res = await fetch(apiEndpoint, {
         method: 'POST',
@@ -383,6 +577,13 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                 appendFn(String(txt));
               }
 
+              if (parsed.type && typeof parsed.type === 'string') {
+                const type = parsed.type.toLowerCase();
+                if ((type === 'cards' || type === 'actions') && parsed.data) {
+                  setMeta({ ui: parsed });
+                }
+              }
+
               if (parsed.sources && Array.isArray(parsed.sources)) {
                 setMeta({ sources: parsed.sources });
               }
@@ -447,9 +648,14 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       } else {
         // Non-streaming response: parse JSON as before
         const data = await res.json();
-        const botText =
-          (data && (data.reply || data.message || (typeof data === 'string' ? data : undefined))) ||
-          'Sorry, I could not understand the response.';
+        const uiPayload =
+          Array.isArray(data)
+            ? data
+            : data?.ui || (data?.type ? data : undefined) || data?.cards || data?.items;
+        const botTextCandidate =
+          (data && (data.reply || data.message || data.text || data.content || (typeof data === 'string' ? data : undefined))) ||
+          '';
+        const botText = botTextCandidate || (uiPayload ? '' : 'Sorry, I could not understand the response.');
 
         const botMsg: NNChatBotMessage = {
           id: `b-${Date.now()}`,
@@ -457,6 +663,8 @@ const NChatBot: React.FC<NNChatBotProps> = ({
           text: botText,
           timestamp: new Date().toISOString(),
           showTimestamp: true,
+          sources: Array.isArray(data?.sources) ? data.sources : undefined,
+          ui: uiPayload,
         };
 
         setMessages((m) => [...m, botMsg]);
@@ -511,6 +719,30 @@ const NChatBot: React.FC<NNChatBotProps> = ({
     ...(headerTextColor ? { ['--nchatbot-header-color' as any]: headerTextColor } : {}),
   } as React.CSSProperties;
   const avatarInitials = getInitials(resolvedAgentName || title || 'Bot');
+  const quickActionsNode = shouldShowQuickActions ? (
+    <div className="nchatbot-quick-actions">
+      {quickActionsTitle && <div className="nchatbot-quick-title">{quickActionsTitle}</div>}
+      <div className="nchatbot-quick-grid" role="list">
+        {resolvedQuickActions.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            className="nchatbot-quick-card"
+            onClick={() => handleQuickAction(action)}
+            disabled={loading}
+            aria-label={action.ariaLabel || action.label}
+          >
+            <div className={`nchatbot-quick-thumb ${action.image ? 'has-image' : 'no-image'}`}>
+              {action.image ? <img src={action.image} alt="" /> : <span className="nchatbot-quick-placeholder" aria-hidden="true" />}
+            </div>
+            <span className="nchatbot-quick-label">{action.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null;
+  const showQuickActionsAfterGreeting = !!quickActionsNode && !hasUserMessage;
+  const showQuickActionsAtEnd = !!quickActionsNode && hasUserMessage;
 
   return (
     <>
@@ -562,14 +794,19 @@ const NChatBot: React.FC<NNChatBotProps> = ({
         </div>
 
       <div className="nchatbot-messages messages" ref={containerRef} data-testid="message-container">
+        {messages.length === 0 && quickActionsNode}
         {messages.map((m, index) => {
           const isUser = m.from === 'user';
           const isSystem = m.from === 'system';
           const showAgentMeta = !isUser && (index === 0 || messages[index - 1].from === 'user');
           const displayName = m.name || resolvedAgentName;
+          const messageText = m.displayText ?? m.text;
+          const uiCards = !isUser ? renderUiCards(m.ui) : null;
+          const hasUi = !!uiCards;
+          const showThinking = !messageText && !hasUi;
 
-          return (
-            <div key={m.id} className={`msg ${isUser ? 'user' : 'ai'} ${isSystem ? 'system' : ''}`}>
+          const messageNode = (
+            <div className={`msg ${isUser ? 'user' : 'ai'} ${isSystem ? 'system' : ''} ${hasUi ? 'has-ui' : ''}`}>
               {!isUser && (
                 <div className={`avatar ${showAgentMeta ? '' : 'is-hidden'}`} aria-hidden={!showAgentMeta}>
                   {botAvatar ? (
@@ -582,19 +819,21 @@ const NChatBot: React.FC<NNChatBotProps> = ({
 
               <div className="bubble-wrap">
                 {displayName && showAgentMeta && <div className="msg-sender">{displayName}</div>}
-                <div className="msg-text">
-                  {m.text ? (
-                    formatMessageContent(m.text)
-                  ) : (
-                    /* when placeholder text is empty, show small thinking indicator */
-                    <div className="thinking-small" aria-hidden />
-                  )}
+                {(messageText || showThinking) && (
+                  <div className="msg-text">
+                    {messageText ? (
+                      formatMessageContent(messageText)
+                    ) : (
+                      /* when placeholder text is empty, show small thinking indicator */
+                      <div className="thinking-small" aria-hidden />
+                    )}
 
-                  {/* timestamp inside bubble (bottom-right) for both bot and user; only show when allowed */}
-                  {m.timestamp && m.showTimestamp !== false && (
-                    <div className="meta in-bubble">{formatTime(m.timestamp)}</div>
-                  )}
-                </div>
+                    {/* timestamp inside bubble (bottom-right) for both bot and user; only show when allowed */}
+                    {m.timestamp && m.showTimestamp !== false && (
+                      <div className="meta in-bubble">{formatTime(m.timestamp)}</div>
+                    )}
+                  </div>
+                )}
 
                 {m.sources && m.sources.length > 0 && (
                   <ul className="sources">
@@ -607,10 +846,24 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                     ))}
                   </ul>
                 )}
+
+                {uiCards}
               </div>
             </div>
           );
+
+          if (index === 0 && showQuickActionsAfterGreeting) {
+            return (
+              <React.Fragment key={m.id}>
+                {messageNode}
+                {quickActionsNode}
+              </React.Fragment>
+            );
+          }
+
+          return <React.Fragment key={m.id}>{messageNode}</React.Fragment>;
         })}
+        {showQuickActionsAtEnd && quickActionsNode}
 
         {loading && !streaming && (
           <div className="msg ai thinking-wrap" aria-live="polite" aria-busy="true">
@@ -629,13 +882,20 @@ const NChatBot: React.FC<NNChatBotProps> = ({
 
       <div className="nchatbot-input-area">
         <div className="nchatbot-input-row">
-          <div className="nchatbot-input-icons" aria-hidden="true">
-            <span className="nchatbot-icon">
+          <div className="nchatbot-input-icons">
+            <span className="nchatbot-icon" aria-hidden="true">
               <SmileIcon />
             </span>
-            <span className="nchatbot-icon">
-              <PlusIcon />
-            </span>
+            <button
+              type="button"
+              className="nchatbot-icon-btn"
+              onClick={revealQuickActions}
+              disabled={!resolvedQuickActions.length}
+              aria-label="Show quick actions"
+              title="Quick actions"
+            >
+              <GridIcon />
+            </button>
           </div>
           <input
             ref={inputRef}
@@ -718,9 +978,12 @@ const SmileIcon = () => (
   </svg>
 );
 
-const PlusIcon = () => (
+const GridIcon = () => (
   <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    <rect x="5" y="5" width="6" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
+    <rect x="13" y="5" width="6" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
+    <rect x="5" y="13" width="6" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
+    <rect x="13" y="13" width="6" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
   </svg>
 );
 
