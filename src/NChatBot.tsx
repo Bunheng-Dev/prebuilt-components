@@ -171,6 +171,18 @@ export interface NNChatBotProps {
   liveChatPhoneLink?: string;
   /** Live chat endpoint for staff messaging */
   liveChatEndpoint?: string;
+  /** Live chat history endpoint (POST) */
+  liveChatHistoryEndpoint?: string;
+  /** Live chat send endpoint (POST) */
+  liveChatSendEndpoint?: string;
+  /** Optional live chat session id; auto-generated when not provided */
+  liveChatSessionId?: string;
+  /** Optional live chat user id; defaults to 0 when omitted */
+  liveChatUserId?: string | number;
+  /** Optional localStorage key used for live chat session id */
+  liveChatSessionStorageKey?: string;
+  /** Poll live chat history while open (ms); set 0 to disable */
+  liveChatHistoryPollingMs?: number;
   /** Optional headers for live chat requests */
   liveChatHeaders?: Record<string, string>;
   /** Optional API key for live chat requests */
@@ -201,6 +213,7 @@ const defaultQuickActions: NNChatBotQuickAction[] = [
 const STORAGE_KEY = 'siem_reap_chat_history';
 const CONTEXT_KEY = 'siem_reap_last_context';
 const LIST_CONTEXT_KEY = 'siem_reap_last_list_context';
+const LIVE_CHAT_SESSION_KEY = 'siem_reap_live_chat_session_id';
 
 function getStorage(): Storage | null {
   if (typeof window === 'undefined') return null;
@@ -334,6 +347,33 @@ function saveListContextToStorage(context: any): void {
   }
 }
 
+function resolveLiveChatSessionId(explicit: string | undefined, storageKey: string): string {
+  if (explicit) return explicit;
+  const stored = readFromStorage(storageKey);
+  if (stored) return stored;
+  const generated = `session_${Date.now()}`;
+  writeToStorage(storageKey, generated);
+  return generated;
+}
+
+function normalizeEpochMs(value: any): number | null {
+  const num = typeof value === 'string' && value.trim() === '' ? NaN : Number(value);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  return num < 1e12 ? num * 1000 : num;
+}
+
+function toIsoTimestamp(value: any): string | undefined {
+  if (!value && value !== 0) return undefined;
+  if (typeof value === 'string' && /[T\-:]/.test(value)) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+  }
+  const ms = normalizeEpochMs(value);
+  if (!ms) return undefined;
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
 function withContextPayload(payload: any, lastSubject: string | null, listContext: any): any {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
   const next = { ...payload };
@@ -410,6 +450,12 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   liveChatAgentName,
   liveChatPhoneLink,
   liveChatEndpoint,
+  liveChatHistoryEndpoint,
+  liveChatSendEndpoint,
+  liveChatSessionId,
+  liveChatUserId,
+  liveChatSessionStorageKey = LIVE_CHAT_SESSION_KEY,
+  liveChatHistoryPollingMs = 0,
   liveChatHeaders,
   liveChatApiKey,
   liveChatPreparePayload,
@@ -465,12 +511,15 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const storageReadyRef = useRef(false);
   const lastContextRef = useRef<string | null>(null);
   const listContextRef = useRef<any>(null);
+  const liveChatSessionIdRef = useRef<string | null>(null);
+  const liveChatHistoryLoadingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const liveContainerRef = useRef<HTMLDivElement | null>(null);
   const [liveChatMode, setLiveChatMode] = useState<boolean>(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState<boolean>(
     () => !hideQuickActionsAfterSend || !messages.some((m) => m.from === 'user')
   );
+  const [quickActionsManuallyOpened, setQuickActionsManuallyOpened] = useState<boolean>(false);
 
   useEffect(() => {
     const stored = loadChatFromStorage();
@@ -547,7 +596,6 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       const line = raw.trim();
       if (line === '') {
         flushList();
-        nodes.push(<div key={`p-${nodes.length}`} className="answer-para">&nbsp;</div>);
         continue;
       }
 
@@ -562,6 +610,20 @@ const NChatBot: React.FC<NNChatBotProps> = ({
         continue;
       }
 
+      // Emphasized label line (e.g. "Summary:")
+      const isDashBulletLine = /^[-\*]\s+/.test(line);
+      const isSymbolBulletLine = /^(?:\u2022|\u25cf)\s+/.test(line);
+      const isBulletLine = isDashBulletLine || isSymbolBulletLine;
+      if (/:$/.test(line) && !isBulletLine) {
+        flushList();
+        nodes.push(
+          <div key={`h-${nodes.length}`} className="answer-title">
+            {line}
+          </div>
+        );
+        continue;
+      }
+
       // Ordered list item
       if (/^\d+\.\s+/.test(line)) {
         if (!olistBuffer) olistBuffer = [];
@@ -570,7 +632,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       }
 
       // Unordered list item
-      if (/^[-\*]\s+/.test(line)) {
+      if (isDashBulletLine) {
         if (!listBuffer) listBuffer = [];
         listBuffer.push(line.replace(/^[-\*]\s+/, ''));
         continue;
@@ -644,6 +706,8 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const hasUserMessage = messages.some((m) => m.from === 'user');
   const shouldShowQuickActions =
     resolvedQuickActions.length > 0 && (hideQuickActionsAfterSend ? quickActionsOpen : true);
+  const shouldShowLiveChatThinking =
+    liveChatLoading && !liveChatStreaming && !liveChatSendEndpoint && !liveChatHistoryEndpoint;
 
   const buildQuickActionDisplay = (action: NNChatBotQuickAction) => {
     return action.displayText || action.prompt || `Want to know ${action.label}`;
@@ -668,6 +732,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
     if (isLiveChatAction) {
       setLiveChatMode(true);
       setQuickActionsOpen(false);
+      setQuickActionsManuallyOpened(false);
       return;
     }
     const fullMessage = buildQuickActionMessage(action);
@@ -678,12 +743,126 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const revealQuickActions = () => {
     if (!resolvedQuickActions.length) return;
     if (liveChatMode) return;
+    setQuickActionsManuallyOpened(true);
     setQuickActionsOpen(true);
   };
 
   const closeLiveChat = () => {
     setLiveChatMode(false);
   };
+
+  const getLiveChatSessionId = () => {
+    if (liveChatSessionId) {
+      liveChatSessionIdRef.current = liveChatSessionId;
+      return liveChatSessionId;
+    }
+    if (liveChatSessionIdRef.current) return liveChatSessionIdRef.current;
+    const resolved = resolveLiveChatSessionId(undefined, liveChatSessionStorageKey);
+    liveChatSessionIdRef.current = resolved;
+    return resolved;
+  };
+
+  const fetchLiveChatHistory = async () => {
+    if (!liveChatHistoryEndpoint) return;
+    if (liveChatHistoryLoadingRef.current) return;
+    const sessionId = getLiveChatSessionId();
+    if (!sessionId) return;
+    liveChatHistoryLoadingRef.current = true;
+    try {
+      const reqHeaders: Record<string, string> = {
+        Accept: 'application/json',
+        ...(liveChatHeaders ?? headers),
+      };
+      if (!Object.prototype.hasOwnProperty.call(reqHeaders, 'Content-Type')) {
+        reqHeaders['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+      }
+      if (liveChatApiKey ?? apiKey) {
+        reqHeaders['Authorization'] = `Bearer ${liveChatApiKey ?? apiKey}`;
+      }
+
+      const params = new URLSearchParams();
+      params.set('session_id', sessionId);
+      if (liveChatUserId !== undefined && liveChatUserId !== null) {
+        params.set('user_id', String(liveChatUserId));
+      }
+
+      const res = await fetch(liveChatHistoryEndpoint, {
+        method: 'POST',
+        headers: reqHeaders,
+        body: params.toString(),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Live chat history error: ${res.status} ${txt}`);
+      }
+
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+      const items = Array.isArray(data?.data) ? data.data : [];
+      const historyMessages: NNChatBotMessage[] = [];
+      items.forEach((item: any, index: number) => {
+        const createdAt = toIsoTimestamp(item?.createtime ?? item?.create_time ?? item?.created_at ?? item?.time);
+        const baseId = item?.id ?? `${index}`;
+        const userText = typeof item?.message === 'string' ? item.message : '';
+        if (userText) {
+          historyMessages.push({
+            id: `lc-h-${baseId}-u`,
+            from: 'user',
+            text: userText,
+            timestamp: createdAt,
+            showTimestamp: true,
+          });
+        }
+        const replyText =
+          typeof item?.reply_content === 'string'
+            ? item.reply_content
+            : typeof item?.reply === 'string'
+              ? item.reply
+              : '';
+        if (replyText) {
+          historyMessages.push({
+            id: `lc-h-${baseId}-b`,
+            from: 'bot',
+            text: replyText,
+            timestamp: createdAt,
+            showTimestamp: true,
+            name: resolvedLiveChatAgentName || undefined,
+          });
+        }
+      });
+
+      if (historyMessages.length > 0) {
+        setLiveChatMessages(historyMessages);
+      }
+      setLiveChatError(null);
+    } catch (err: any) {
+      setLiveChatError(err?.message || 'Failed to load live chat history.');
+    } finally {
+      liveChatHistoryLoadingRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (!liveChatMode) return;
+    if (!liveChatHistoryEndpoint) return;
+    void fetchLiveChatHistory();
+  }, [liveChatMode, liveChatHistoryEndpoint]);
+
+  useEffect(() => {
+    if (!liveChatMode) return;
+    if (!liveChatHistoryEndpoint) return;
+    if (!liveChatHistoryPollingMs || liveChatHistoryPollingMs < 1000) return;
+    const intervalId = window.setInterval(() => {
+      void fetchLiveChatHistory();
+    }, liveChatHistoryPollingMs);
+    return () => window.clearInterval(intervalId);
+  }, [liveChatMode, liveChatHistoryEndpoint, liveChatHistoryPollingMs]);
 
   const sendLiveChatMessage = async () => {
     const trimmed = liveChatInput.trim();
@@ -696,15 +875,57 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       showTimestamp: true,
     };
     const nextMessages = [...liveChatMessages, userMsg];
-    const historyForPayload = nextMessages.map((m) => ({ from: m.from, text: m.text }));
     setLiveChatMessages((prev) => [...prev, userMsg]);
     setLiveChatInput('');
     setLiveChatError(null);
     if (onLiveChatSend) onLiveChatSend(trimmed);
-    if (!liveChatEndpoint) return;
+
+    const sendEndpoint = liveChatSendEndpoint ?? liveChatEndpoint;
+    const useLegacyLiveChat = !liveChatSendEndpoint;
+    if (!sendEndpoint) return;
 
     try {
       setLiveChatLoading(true);
+
+      if (!useLegacyLiveChat) {
+        const sessionId = getLiveChatSessionId();
+        const resolvedUserId = liveChatUserId ?? 0;
+        const reqHeaders: Record<string, string> = {
+          Accept: 'application/json',
+          ...(liveChatHeaders ?? headers),
+        };
+        if (!Object.prototype.hasOwnProperty.call(reqHeaders, 'Content-Type')) {
+          reqHeaders['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+        }
+        if (liveChatApiKey ?? apiKey) {
+          reqHeaders['Authorization'] = `Bearer ${liveChatApiKey ?? apiKey}`;
+        }
+
+        const params = new URLSearchParams();
+        params.set('message', trimmed);
+        params.set('session_id', sessionId);
+        if (resolvedUserId !== undefined && resolvedUserId !== null) {
+          params.set('user_id', String(resolvedUserId));
+        }
+
+        const res = await fetch(sendEndpoint, {
+          method: 'POST',
+          headers: reqHeaders,
+          body: params.toString(),
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`API error: ${res.status} ${txt}`);
+        }
+
+        if (liveChatHistoryEndpoint) {
+          await fetchLiveChatHistory();
+        }
+        return;
+      }
+
+      const historyForPayload = nextMessages.map((m) => ({ from: m.from, text: m.text }));
       const reqHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
         Accept: 'application/json, text/event-stream, text/plain',
@@ -723,7 +944,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
             ...(liveChatPayloadExtras || {}),
           };
 
-      const res = await fetch(liveChatEndpoint, {
+      const res = await fetch(sendEndpoint, {
         method: 'POST',
         headers: reqHeaders,
         body: JSON.stringify(payload),
@@ -738,7 +959,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       const hasReadable = !!res.body && typeof (res.body as any).getReader === 'function';
       const shouldStream =
         liveChatStreaming ||
-        liveChatEndpoint.includes('/stream') ||
+        sendEndpoint.includes('/stream') ||
         (hasReadable && (contentType.includes('text/event-stream') || contentType.includes('text/plain')));
 
       if (shouldStream && hasReadable) {
@@ -955,6 +1176,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
     if (hideQuickActionsAfterSend) {
       setQuickActionsOpen(false);
     }
+    setQuickActionsManuallyOpened(false);
 
     const userMsg: NNChatBotMessage = {
       id: `u-${Date.now()}`,
@@ -1225,7 +1447,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
     ...(headerTextColor ? { ['--nchatbot-header-color' as any]: headerTextColor } : {}),
   } as React.CSSProperties;
   const avatarInitials = getInitials(resolvedAgentName || title || 'Bot');
-  const quickActionsNode = shouldShowQuickActions ? (
+  const quickActionsBaseNode = resolvedQuickActions.length ? (
     <div className="nchatbot-quick-actions">
       {quickActionsTitle && <div className="nchatbot-quick-title">{quickActionsTitle}</div>}
       <div className="nchatbot-quick-grid" role="list">
@@ -1247,8 +1469,23 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       </div>
     </div>
   ) : null;
-  const showQuickActionsAfterGreeting = !!quickActionsNode && !hasUserMessage;
-  const showQuickActionsAtEnd = !!quickActionsNode && hasUserMessage;
+  const quickActionsNode = shouldShowQuickActions ? quickActionsBaseNode : null;
+  const quickActionsTriggerIndex = quickActionsBaseNode && !quickActionsManuallyOpened
+    ? (() => {
+        for (let i = messages.length - 1; i >= 0; i -= 1) {
+          const m = messages[i];
+          if (m.from === 'bot' && shouldShowQuickActionsForMessage(m.text, quickActionCommandTag, quickActionCommandId)) {
+            return i;
+          }
+        }
+        return -1;
+      })()
+    : -1;
+  const hasQuickActionsTrigger = quickActionsTriggerIndex !== -1;
+  const showQuickActionsAfterGreeting =
+    !!quickActionsNode && !hasUserMessage && (!hasQuickActionsTrigger || quickActionsManuallyOpened);
+  const showQuickActionsAtEnd =
+    !!quickActionsNode && hasUserMessage && (!hasQuickActionsTrigger || quickActionsManuallyOpened);
 
   return (
     <>
@@ -1327,7 +1564,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                   </div>
                 );
               })}
-              {liveChatLoading && !liveChatStreaming && (
+              {shouldShowLiveChatThinking && (
                 <div className="msg ai thinking-wrap" aria-live="polite" aria-busy="true">
                   <div className="avatar" aria-hidden>
                     {botAvatar ? <img src={botAvatar} alt="" /> : <div className="avatar-initials">{getInitials(resolvedLiveChatAgentName || 'Staff')}</div>}
@@ -1391,7 +1628,10 @@ const NChatBot: React.FC<NNChatBotProps> = ({
               const showAgentMeta = !isUser && (index === 0 || messages[index - 1].from === 'user');
               const displayName = m.name || resolvedAgentName;
               const rawMessageText = m.displayText ?? m.text;
-              const messageText = !isUser ? addApologyEmoji(rawMessageText) : rawMessageText;
+              const cleanedMessageText = !isUser
+                ? stripUiCmdText(rawMessageText, quickActionCommandTag, quickActionCommandId)
+                : rawMessageText;
+              const messageText = !isUser ? addApologyEmoji(cleanedMessageText) : rawMessageText;
               const uiCards = !isUser ? renderUiCards(m.ui) : null;
               const hasUi = !!uiCards;
               const showThinking = !messageText && !hasUi;
@@ -1472,6 +1712,15 @@ const NChatBot: React.FC<NNChatBotProps> = ({
                   </div>
                 </div>
               );
+
+              if (index === quickActionsTriggerIndex && quickActionsBaseNode) {
+                return (
+                  <React.Fragment key={m.id}>
+                    {messageNode}
+                    {quickActionsBaseNode}
+                  </React.Fragment>
+                );
+              }
 
               if (index === 0 && showQuickActionsAfterGreeting) {
                 return (
@@ -1610,6 +1859,50 @@ function toSourceDisplay(source: any): SourceDisplay | null {
     }
   }
   return null;
+}
+
+function shouldShowQuickActionsForMessage(text: string | undefined, tag: string, id: string): boolean {
+  if (!text) return false;
+  const lowered = String(text).toLowerCase();
+  if (lowered.includes('khmer language')) return true;
+  if (lowered.includes('information avialable') || lowered.includes('information available')) return true;
+  const tagLower = String(tag || '').toLowerCase();
+  const idLower = String(id || '').toLowerCase();
+  if (tagLower && idLower) {
+    const marker = `[${tagLower}:${idLower}]`;
+    if (lowered.includes(marker)) return true;
+  }
+  if (lowered.includes('ui_cmd') && lowered.includes('want to know')) return true;
+  return false;
+}
+
+function escapeRegExp(value: string): string {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function stripUiCmdText(text: string | undefined, tag: string, id: string): string | undefined {
+  if (!text) return text;
+  const tagText = String(tag || '').trim();
+  const idText = String(id || '').trim();
+  const markerRegex = tagText && idText ? new RegExp(`\\[${escapeRegExp(tagText)}:${escapeRegExp(idText)}\\]`, 'gi') : null;
+  const linkRegex = /\[[^\]]+\]\(\s*\[UI_CMD:[^\]]+\][^)]+\)/gi;
+  const rawLines = String(text).split(/\r?\n/);
+  const cleanedLines: string[] = [];
+
+  for (const raw of rawLines) {
+    let line = raw;
+    const hadUiCmd = /ui_cmd/i.test(line) || (markerRegex ? markerRegex.test(line) : false);
+    if (markerRegex) markerRegex.lastIndex = 0;
+    line = line.replace(linkRegex, '');
+    if (markerRegex) line = line.replace(markerRegex, '');
+    line = line.replace(/\[UI_CMD:[^\]]+\]/gi, '');
+    line = line.replace(/\s{2,}/g, ' ').trim();
+    if (!line) continue;
+    if (hadUiCmd && !/[a-z0-9]/i.test(line)) continue;
+    cleanedLines.push(line);
+  }
+
+  return cleanedLines.join('\n');
 }
 
 function addApologyEmoji(text?: string): string | undefined {

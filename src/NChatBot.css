@@ -35,7 +35,7 @@
   right: 24px;
   bottom: 92px;
   width: 420px;
-  height: min(680px, calc(100vh - 140px));
+  height: min(720px, calc(100vh - 140px));
   z-index: 99999;
   transform-origin: calc(100% - 24px) calc(100% - 24px);
   transition: transform 220ms ease, opacity 220ms ease;
@@ -363,7 +363,7 @@
 
 .msg-text {
   display: inline-block;
-  padding: 12px 44px 18px 14px;
+  padding: 12px 44px 14px 14px;
   border-radius: 14px;
   font-size: 13px;
   line-height: 1.5;
@@ -427,7 +427,7 @@
 }
 
 .answer-para {
-  margin: 0;
+  margin-bottom: 10px;
 }
 
 .custom-list,
@@ -752,7 +752,7 @@
 }
 
 .nchatbot-card-body {
-  padding: 8px 9px 0px;
+  padding: 8px 9px 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
