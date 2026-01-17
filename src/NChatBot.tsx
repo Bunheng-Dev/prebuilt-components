@@ -34,6 +34,8 @@ export interface NNChatBotQuickAction {
   commandTag?: string;
   /** Optional command id override */
   commandId?: string;
+  /** Optional action type */
+  actionType?: 'message' | 'live_chat';
   /** Optional aria label for the button */
   ariaLabel?: string;
 }
@@ -140,6 +142,36 @@ export interface NNChatBotProps {
   headerStyle?: React.CSSProperties;
   /** Whether to show the card menu label above the carousel */
   showCardMenuLabel?: boolean;
+  /** Enable live chat mode */
+  enableLiveChat?: boolean;
+  /** Title shown in live chat header */
+  liveChatTitle?: string;
+  /** Placeholder for live chat input */
+  liveChatPlaceholder?: string;
+  /** Initial message shown by staff when live chat opens */
+  liveChatWelcomeMessage?: string | null;
+  /** Agent name shown in live chat */
+  liveChatAgentName?: string | null;
+  /** Optional phone link for live chat header (e.g. "tel:+123") */
+  liveChatPhoneLink?: string;
+  /** Live chat endpoint for staff messaging */
+  liveChatEndpoint?: string;
+  /** Optional headers for live chat requests */
+  liveChatHeaders?: Record<string, string>;
+  /** Optional API key for live chat requests */
+  liveChatApiKey?: string;
+  /** Optional helper to shape live chat payloads */
+  liveChatPreparePayload?: (text: string, history: NNChatBotMessage[]) => any;
+  /** Key used for the live chat payload (e.g. "message" or "query") */
+  liveChatPayloadKey?: 'message' | 'query';
+  /** Additional fields merged into the live chat request body */
+  liveChatPayloadExtras?: Record<string, any>;
+  /** If true, include history in live chat payload */
+  liveChatIncludeHistory?: boolean;
+  /** If true, attempt to read live chat streaming responses */
+  liveChatStreaming?: boolean;
+  /** Optional callback when user sends a live chat message */
+  onLiveChatSend?: (text: string) => void;
 }
 
 const defaultQuickActions: NNChatBotQuickAction[] = [
@@ -148,7 +180,7 @@ const defaultQuickActions: NNChatBotQuickAction[] = [
   { id: 'thing-to-do', label: 'Thing To Do' },
   { id: 'private-villa', label: 'Private Villa' },
   { id: 'tour-guide', label: 'Tour Guide' },
-  { id: 'talk-to-agent', label: 'Talk To Agent', prompt: 'Talk to Agent' },
+  { id: 'talk-to-agent', label: 'Talk To Agent', prompt: 'Talk to Agent', actionType: 'live_chat' },
 ];
 
 const NChatBot: React.FC<NNChatBotProps> = ({
@@ -190,6 +222,21 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   headerRounded = true,
   headerStyle,
   showCardMenuLabel = true,
+  enableLiveChat = true,
+  liveChatTitle = 'Live Chat',
+  liveChatPlaceholder = 'Type a message...',
+  liveChatWelcomeMessage,
+  liveChatAgentName,
+  liveChatPhoneLink,
+  liveChatEndpoint,
+  liveChatHeaders,
+  liveChatApiKey,
+  liveChatPreparePayload,
+  liveChatPayloadKey = payloadKey,
+  liveChatPayloadExtras,
+  liveChatIncludeHistory = includeHistory,
+  liveChatStreaming = false,
+  onLiveChatSend,
 }) => {
   const resolvedHeaderLabel = headerLabel ?? title;
   const resolvedHeaderHeadline = headerHeadline === null ? '' : headerHeadline ?? 'Questions? Chat with us!';
@@ -198,6 +245,9 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const resolvedAgentName = agentName === null ? '' : agentName ?? 'Support';
   const resolvedFooterText = footerText === null ? '' : footerText ?? 'We run on crisp like a AI Mini';
   const resolvedInitialMessage = initialMessage === null ? '' : initialMessage ?? 'How can we help you today?';
+  const resolvedLiveChatAgentName = liveChatAgentName === null ? '' : liveChatAgentName ?? resolvedAgentName;
+  const resolvedLiveChatWelcome =
+    liveChatWelcomeMessage === null ? '' : liveChatWelcomeMessage ?? 'Connecting to our team...';
 
   const [messages, setMessages] = useState<NNChatBotMessage[]>(() => {
     if (!resolvedInitialMessage) return [];
@@ -212,20 +262,39 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       },
     ];
   });
+  const [liveChatMessages, setLiveChatMessages] = useState<NNChatBotMessage[]>(() => {
+    if (!resolvedLiveChatWelcome) return [];
+    return [
+      {
+        id: 'lc-1',
+        from: 'bot',
+        text: resolvedLiveChatWelcome,
+        timestamp: new Date().toISOString(),
+        showTimestamp: true,
+        name: resolvedLiveChatAgentName || undefined,
+      },
+    ];
+  });
   const [input, setInput] = useState('');
+  const [liveChatInput, setLiveChatInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveChatLoading, setLiveChatLoading] = useState(false);
+  const [liveChatError, setLiveChatError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const liveContainerRef = useRef<HTMLDivElement | null>(null);
+  const [liveChatMode, setLiveChatMode] = useState<boolean>(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState<boolean>(
     () => !hideQuickActionsAfterSend || !messages.some((m) => m.from === 'user')
   );
 
   useEffect(() => {
     // scroll to bottom when messages change
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    const target = liveChatMode ? liveContainerRef.current : containerRef.current;
+    if (target) {
+      target.scrollTop = target.scrollHeight;
     }
-  }, [messages, loading, quickActionsOpen]);
+  }, [messages, liveChatMessages, loading, liveChatLoading, quickActionsOpen, liveChatMode]);
 
   // Simple formatter that mirrors the `app.js` output formatting (headings, paragraphs, lists, images, links)
   const formatMessageContent = (text?: string) => {
@@ -376,6 +445,16 @@ const NChatBot: React.FC<NNChatBotProps> = ({
 
   const handleQuickAction = (action: NNChatBotQuickAction) => {
     if (loading) return;
+    const isLiveChatAction =
+      enableLiveChat &&
+      (action.actionType === 'live_chat' ||
+        action.id === 'talk-to-agent' ||
+        String(action.label).toLowerCase() === 'talk to agent');
+    if (isLiveChatAction) {
+      setLiveChatMode(true);
+      setQuickActionsOpen(false);
+      return;
+    }
     const fullMessage = buildQuickActionMessage(action);
     const displayText = buildQuickActionDisplay(action);
     sendMessage(fullMessage, { displayText });
@@ -383,7 +462,206 @@ const NChatBot: React.FC<NNChatBotProps> = ({
 
   const revealQuickActions = () => {
     if (!resolvedQuickActions.length) return;
+    if (liveChatMode) return;
     setQuickActionsOpen(true);
+  };
+
+  const closeLiveChat = () => {
+    setLiveChatMode(false);
+  };
+
+  const sendLiveChatMessage = async () => {
+    const trimmed = liveChatInput.trim();
+    if (!trimmed || liveChatLoading) return;
+    const userMsg: NNChatBotMessage = {
+      id: `lc-u-${Date.now()}`,
+      from: 'user',
+      text: trimmed,
+      timestamp: new Date().toISOString(),
+      showTimestamp: true,
+    };
+    const nextMessages = [...liveChatMessages, userMsg];
+    const historyForPayload = nextMessages.map((m) => ({ from: m.from, text: m.text }));
+    setLiveChatMessages((prev) => [...prev, userMsg]);
+    setLiveChatInput('');
+    setLiveChatError(null);
+    if (onLiveChatSend) onLiveChatSend(trimmed);
+    if (!liveChatEndpoint) return;
+
+    try {
+      setLiveChatLoading(true);
+      const reqHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream, text/plain',
+        ...(liveChatHeaders ?? headers),
+      };
+      if (liveChatApiKey ?? apiKey) {
+        reqHeaders['Authorization'] = `Bearer ${liveChatApiKey ?? apiKey}`;
+      }
+
+      const payloadBase = { [liveChatPayloadKey]: trimmed };
+      const payload = liveChatPreparePayload
+        ? liveChatPreparePayload(trimmed, nextMessages)
+        : {
+            ...payloadBase,
+            ...(liveChatIncludeHistory ? { history: historyForPayload } : {}),
+            ...(liveChatPayloadExtras || {}),
+          };
+
+      const res = await fetch(liveChatEndpoint, {
+        method: 'POST',
+        headers: reqHeaders,
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`API error: ${res.status} ${txt}`);
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      const hasReadable = !!res.body && typeof (res.body as any).getReader === 'function';
+      const shouldStream =
+        liveChatStreaming ||
+        liveChatEndpoint.includes('/stream') ||
+        (hasReadable && (contentType.includes('text/event-stream') || contentType.includes('text/plain')));
+
+      if (shouldStream && hasReadable) {
+        const botId = `lc-b-${Date.now()}`;
+        setLiveChatMessages((m) => [
+          ...m,
+          {
+            id: botId,
+            from: 'bot',
+            text: '',
+            timestamp: new Date().toISOString(),
+            showTimestamp: false,
+            name: resolvedLiveChatAgentName || undefined,
+          },
+        ]);
+
+        const reader = (res.body as ReadableStream<Uint8Array>).getReader();
+        const decoder = new TextDecoder();
+
+        const appendToBot = (append: string) => {
+          setLiveChatMessages((prev) =>
+            prev.map((msg) => (msg.id === botId ? { ...msg, text: (msg.text || '') + append } : msg))
+          );
+        };
+
+        const processChunk = (rawChunk: string) => {
+          const lines = rawChunk.split(/\r?\n/);
+          for (let line of lines) {
+            if (!line) continue;
+            line = line.replace(/^\s*data:\s*/i, '').trim();
+            if (!line) continue;
+            if (line === '[DONE]' || line.toLowerCase() === 'done') continue;
+
+            try {
+              const parsed = JSON.parse(line);
+              if (parsed && parsed.type && String(parsed.type).toLowerCase() === 'done') continue;
+
+              if (typeof parsed === 'string') {
+                appendToBot(parsed);
+                continue;
+              }
+
+              if (parsed.choices && Array.isArray(parsed.choices)) {
+                for (const c of parsed.choices) {
+                  if (c && c.delta && (c.delta.content || c.delta.text)) {
+                    appendToBot(c.delta.content || c.delta.text);
+                  } else if (c && c.text) {
+                    appendToBot(c.text);
+                  }
+                }
+                continue;
+              }
+
+              let txt = parsed.reply || parsed.message || parsed.text || parsed.content || parsed.delta || parsed.chunk || null;
+              if (!txt && parsed.data) {
+                if (typeof parsed.data === 'string') txt = parsed.data;
+                else if (parsed.data.content) txt = parsed.data.content;
+                else if (parsed.data.text) txt = parsed.data.text;
+              }
+
+              if (txt) appendToBot(String(txt));
+            } catch (e) {
+              appendToBot(line);
+            }
+          }
+        };
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          if (!chunk) continue;
+          processChunk(chunk);
+        }
+
+        setLiveChatMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botId ? { ...msg, showTimestamp: true, timestamp: new Date().toISOString() } : msg
+          )
+        );
+      } else {
+        const isJson = contentType.includes('application/json');
+        let data: any = null;
+        let text = '';
+        if (isJson) {
+          try {
+            data = await res.json();
+          } catch (e) {
+            text = await res.text();
+          }
+        } else {
+          text = await res.text();
+        }
+
+        if (data !== null && data !== undefined) {
+          if (typeof data === 'string') text = data;
+          else {
+            text =
+              data.reply ||
+              data.message ||
+              data.text ||
+              data.content ||
+              (typeof data.data === 'string' ? data.data : '') ||
+              '';
+          }
+        }
+
+        const botMsg: NNChatBotMessage = {
+          id: `lc-b-${Date.now()}`,
+          from: 'bot',
+          text: text || 'Thanks! Our team will be with you shortly.',
+          timestamp: new Date().toISOString(),
+          showTimestamp: true,
+          name: resolvedLiveChatAgentName || undefined,
+        };
+        setLiveChatMessages((m) => [...m, botMsg]);
+      }
+    } catch (err: any) {
+      setLiveChatError(err?.message || 'An unknown error occurred');
+      const botMsg: NNChatBotMessage = {
+        id: `lc-b-${Date.now()}`,
+        from: 'bot',
+        text: 'Sorry, something went wrong while contacting live support.',
+        timestamp: new Date().toISOString(),
+        showTimestamp: true,
+        name: resolvedLiveChatAgentName || undefined,
+      };
+      setLiveChatMessages((m) => [...m, botMsg]);
+    } finally {
+      setLiveChatLoading(false);
+    }
+  };
+
+  const onLiveChatKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!liveChatLoading) sendLiveChatMessage();
+    }
   };
 
   const extractUiCards = (ui: any): NChatBotUiCard[] => {
@@ -711,7 +989,7 @@ const NChatBot: React.FC<NNChatBotProps> = ({
 
 
   // Add stickyFooter or floating class when requested
-  const rootClass = `nchatbot ${fullWidth ? 'fullwidth' : ''} ${stickyFooter ? 'sticky-footer' : ''} ${floatButton ? 'floating' : ''} ${open ? 'open' : 'closed'} ${className}`;
+  const rootClass = `nchatbot ${fullWidth ? 'fullwidth' : ''} ${stickyFooter ? 'sticky-footer' : ''} ${floatButton ? 'floating' : ''} ${liveChatMode ? 'live-mode' : ''} ${open ? 'open' : 'closed'} ${className}`;
   const headerClass = `nchatbot-header ${headerRounded ? 'rounded-top' : ''}`;
   const headerInlineStyle = {
     ...(headerStyle || {}),
@@ -766,170 +1044,255 @@ const NChatBot: React.FC<NNChatBotProps> = ({
       {floatButton && open && <div className="nchatbot-backdrop" aria-hidden="true" />}
 
       <div id="nchatbot-panel" ref={panelRef} className={rootClass} style={rootStyle} aria-hidden={floatButton ? !open : undefined}>
-        <div className={headerClass} style={headerInlineStyle}>
-          <div className="nchatbot-header-top">
-            <div className="nchatbot-header-pill">
-              <span className="nchatbot-header-dot" />
-              <span>{resolvedHeaderLabel}</span>
+        {liveChatMode ? (
+          <>
+            <div className="nchatbot-live-header">
+              <button
+                type="button"
+                className="nchatbot-live-back"
+                onClick={closeLiveChat}
+                aria-label="Back to chatbot"
+                title="Back to chatbot"
+              >
+                <MinusIcon />
+              </button>
+              <div className="nchatbot-live-title">{liveChatTitle}</div>
+              {liveChatPhoneLink ? (
+                <a className="nchatbot-live-phone" href={liveChatPhoneLink} aria-label="Call support">
+                  <PhoneIcon />
+                </a>
+              ) : (
+                <button type="button" className="nchatbot-live-phone" disabled aria-hidden="true">
+                  <PhoneIcon />
+                </button>
+              )}
             </div>
-          </div>
-          <div className="nchatbot-header-hero">
-            {/* <div className="nchatbot-avatar-stack" aria-hidden="true">
-              <div className="nchatbot-avatar-stack-item">
-                {botAvatar ? <img src={botAvatar} alt="" /> : <span className="avatar-initials">{avatarInitials}</span>}
-              </div>
-              <div className="nchatbot-avatar-stack-item is-center">
-                <UserIcon />
-              </div>
-              <div className="nchatbot-avatar-stack-item">
-                {botAvatar ? <img src={botAvatar} alt="" /> : <span className="avatar-initials">{avatarInitials}</span>}
-              </div>
-            </div> */}
-            <div className="nchatbot-header-copy">
-              {resolvedHeaderHeadline && <div className="nchatbot-header-headline">{resolvedHeaderHeadline}</div>}
-              {resolvedHeaderSubtext && <div className="nchatbot-header-subtext">{resolvedHeaderSubtext}</div>}
-              {resolvedHeaderStatus && <div className="nchatbot-header-status">{resolvedHeaderStatus}</div>}
-            </div>
-          </div>
-        </div>
 
-      <div className="nchatbot-messages messages" ref={containerRef} data-testid="message-container">
-        {messages.length === 0 && quickActionsNode}
-        {messages.map((m, index) => {
-          const isUser = m.from === 'user';
-          const isSystem = m.from === 'system';
-          const showAgentMeta = !isUser && (index === 0 || messages[index - 1].from === 'user');
-          const displayName = m.name || resolvedAgentName;
-          const messageText = m.displayText ?? m.text;
-          const uiCards = !isUser ? renderUiCards(m.ui) : null;
-          const hasUi = !!uiCards;
-          const showThinking = !messageText && !hasUi;
+            <div className="nchatbot-live-messages" ref={liveContainerRef}>
+              {liveChatMessages.map((m, index) => {
+                const isUser = m.from === 'user';
+                const showAgentMeta = !isUser && (index === 0 || liveChatMessages[index - 1].from === 'user');
+                const displayName = m.name || resolvedLiveChatAgentName;
 
-          const messageNode = (
-            <div className={`msg ${isUser ? 'user' : 'ai'} ${isSystem ? 'system' : ''} ${hasUi ? 'has-ui' : ''}`}>
-              {!isUser && (
-                <div className={`avatar ${showAgentMeta ? '' : 'is-hidden'}`} aria-hidden={!showAgentMeta}>
-                  {botAvatar ? (
-                    <img src={botAvatar} alt={displayName ? `${displayName} avatar` : 'bot avatar'} />
-                  ) : (
-                    <div className="avatar-initials">{avatarInitials}</div>
-                  )}
+                return (
+                  <div key={m.id} className={`msg ${isUser ? 'user' : 'ai'}`}>
+                    {!isUser && (
+                      <div className={`avatar ${showAgentMeta ? '' : 'is-hidden'}`} aria-hidden={!showAgentMeta}>
+                        {botAvatar ? (
+                          <img src={botAvatar} alt={displayName ? `${displayName} avatar` : 'staff avatar'} />
+                        ) : (
+                          <div className="avatar-initials">{getInitials(displayName || 'Staff')}</div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="bubble-wrap">
+                      {displayName && showAgentMeta && <div className="msg-sender">{displayName}</div>}
+                      <div className="msg-text">
+                        {formatMessageContent(m.text)}
+                        {m.timestamp && (
+                          <div className="meta in-bubble">{formatTime(m.timestamp)}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {liveChatLoading && !liveChatStreaming && (
+                <div className="msg ai thinking-wrap" aria-live="polite" aria-busy="true">
+                  <div className="avatar" aria-hidden>
+                    {botAvatar ? <img src={botAvatar} alt="" /> : <div className="avatar-initials">{getInitials(resolvedLiveChatAgentName || 'Staff')}</div>}
+                  </div>
+                  <div className="bubble-wrap">
+                    <div className="msg-text thinking-bubble">
+                      <span className="thinking-text">Connecting</span>
+                      <span className="thinking-dots" aria-hidden></span>
+                    </div>
+                  </div>
                 </div>
               )}
+            </div>
 
-              <div className="bubble-wrap">
-                {displayName && showAgentMeta && <div className="msg-sender">{displayName}</div>}
-                {(messageText || showThinking) && (
-                  <div className="msg-text">
-                    {messageText ? (
-                      formatMessageContent(messageText)
-                    ) : (
-                      /* when placeholder text is empty, show small thinking indicator */
-                      <div className="thinking-small" aria-hidden />
+            <div className="nchatbot-input-area">
+              <div className="nchatbot-input-row">
+                <input
+                  className="nchatbot-input"
+                  placeholder={liveChatPlaceholder}
+                  value={liveChatInput}
+                  onChange={(e) => setLiveChatInput(e.target.value)}
+                  onKeyDown={onLiveChatKeyDown}
+                  disabled={liveChatLoading}
+                />
+                <button
+                  type="button"
+                  className="nchatbot-send"
+                  onClick={sendLiveChatMessage}
+                  disabled={liveChatLoading || !liveChatInput.trim()}
+                  aria-label="Send live chat message"
+                >
+                  <SendIcon />
+                </button>
+              </div>
+            </div>
+            {liveChatError && <div className="nchatbot-error">{liveChatError}</div>}
+          </>
+        ) : (
+          <>
+            <div className={headerClass} style={headerInlineStyle}>
+              <div className="nchatbot-header-top">
+                <div className="nchatbot-header-pill">
+                  <span className="nchatbot-header-dot" />
+                  <span>{resolvedHeaderLabel}</span>
+                </div>
+              </div>
+              <div className="nchatbot-header-hero">
+                <div className="nchatbot-header-copy">
+                  {resolvedHeaderHeadline && <div className="nchatbot-header-headline">{resolvedHeaderHeadline}</div>}
+                  {resolvedHeaderSubtext && <div className="nchatbot-header-subtext">{resolvedHeaderSubtext}</div>}
+                  {resolvedHeaderStatus && <div className="nchatbot-header-status">{resolvedHeaderStatus}</div>}
+                </div>
+              </div>
+            </div>
+
+          <div className="nchatbot-messages messages" ref={containerRef} data-testid="message-container">
+            {messages.length === 0 && quickActionsNode}
+            {messages.map((m, index) => {
+              const isUser = m.from === 'user';
+              const isSystem = m.from === 'system';
+              const showAgentMeta = !isUser && (index === 0 || messages[index - 1].from === 'user');
+              const displayName = m.name || resolvedAgentName;
+              const messageText = m.displayText ?? m.text;
+              const uiCards = !isUser ? renderUiCards(m.ui) : null;
+              const hasUi = !!uiCards;
+              const showThinking = !messageText && !hasUi;
+
+              const messageNode = (
+                <div className={`msg ${isUser ? 'user' : 'ai'} ${isSystem ? 'system' : ''} ${hasUi ? 'has-ui' : ''}`}>
+                  {!isUser && (
+                    <div className={`avatar ${showAgentMeta ? '' : 'is-hidden'}`} aria-hidden={!showAgentMeta}>
+                      {botAvatar ? (
+                        <img src={botAvatar} alt={displayName ? `${displayName} avatar` : 'bot avatar'} />
+                      ) : (
+                        <div className="avatar-initials">{avatarInitials}</div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="bubble-wrap">
+                    {displayName && showAgentMeta && <div className="msg-sender">{displayName}</div>}
+                    {(messageText || showThinking) && (
+                      <div className="msg-text">
+                        {messageText ? (
+                          formatMessageContent(messageText)
+                        ) : (
+                          /* when placeholder text is empty, show small thinking indicator */
+                          <div className="thinking-small" aria-hidden />
+                        )}
+
+                        {/* timestamp inside bubble (bottom-right) for both bot and user; only show when allowed */}
+                        {m.timestamp && m.showTimestamp !== false && (
+                          <div className="meta in-bubble">{formatTime(m.timestamp)}</div>
+                        )}
+                      </div>
                     )}
 
-                    {/* timestamp inside bubble (bottom-right) for both bot and user; only show when allowed */}
-                    {m.timestamp && m.showTimestamp !== false && (
-                      <div className="meta in-bubble">{formatTime(m.timestamp)}</div>
+                    {m.sources && m.sources.length > 0 && (
+                      <ul className="sources">
+                        {m.sources.map((s, i) => (
+                          <li key={i} className="source-item">
+                            <button type="button" className="source-btn" title={String(s)}>
+                              <span className="source-btn-label">{String(s)}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
+
+                    {uiCards}
                   </div>
-                )}
+                </div>
+              );
 
-                {m.sources && m.sources.length > 0 && (
-                  <ul className="sources">
-                    {m.sources.map((s, i) => (
-                      <li key={i} className="source-item">
-                        <button type="button" className="source-btn" title={String(s)}>
-                          <span className="source-btn-label">{String(s)}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              if (index === 0 && showQuickActionsAfterGreeting) {
+                return (
+                  <React.Fragment key={m.id}>
+                    {messageNode}
+                    {quickActionsNode}
+                  </React.Fragment>
+                );
+              }
 
-                {uiCards}
+              return <React.Fragment key={m.id}>{messageNode}</React.Fragment>;
+            })}
+            {showQuickActionsAtEnd && quickActionsNode}
+
+            {loading && !streaming && (
+              <div className="msg ai thinking-wrap" aria-live="polite" aria-busy="true">
+                <div className="avatar" aria-hidden>
+                  {botAvatar ? <img src={botAvatar} alt="" /> : <div className="avatar-initials">{avatarInitials}</div>}
+                </div>
+                <div className="bubble-wrap">
+                  <div className="msg-text thinking-bubble">
+                    <span className="thinking-text">Thinking</span>
+                    <span className="thinking-dots" aria-hidden></span>
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-
-          if (index === 0 && showQuickActionsAfterGreeting) {
-            return (
-              <React.Fragment key={m.id}>
-                {messageNode}
-                {quickActionsNode}
-              </React.Fragment>
-            );
-          }
-
-          return <React.Fragment key={m.id}>{messageNode}</React.Fragment>;
-        })}
-        {showQuickActionsAtEnd && quickActionsNode}
-
-        {loading && !streaming && (
-          <div className="msg ai thinking-wrap" aria-live="polite" aria-busy="true">
-            <div className="avatar" aria-hidden>
-              {botAvatar ? <img src={botAvatar} alt="" /> : <div className="avatar-initials">{avatarInitials}</div>}
-            </div>
-            <div className="bubble-wrap">
-              <div className="msg-text thinking-bubble">
-                <span className="thinking-text">Thinking</span>
-                <span className="thinking-dots" aria-hidden></span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="nchatbot-input-area">
-        <div className="nchatbot-input-row">
-          <div className="nchatbot-input-icons">
-            <span className="nchatbot-icon" aria-hidden="true">
-              <SmileIcon />
-            </span>
-            <button
-              type="button"
-              className="nchatbot-icon-btn"
-              onClick={revealQuickActions}
-              disabled={!resolvedQuickActions.length}
-              aria-label="Show quick actions"
-              title="Quick actions"
-            >
-              <GridIcon />
-            </button>
-          </div>
-          <input
-            ref={inputRef}
-            className="nchatbot-input"
-            placeholder={placeholder}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            disabled={loading}
-          />
-          <button
-            type="button"
-            className="nchatbot-send"
-            onClick={() => sendMessage(input)}
-            disabled={loading || !input.trim()}
-            aria-label="Send message"
-          >
-            <SendIcon />
-          </button>
-        </div>
-        {resolvedFooterText && (
-          <div className="nchatbot-footer">
-            {footerLink ? (
-              <a href={footerLink} target="_blank" rel="noreferrer noopener">
-                {resolvedFooterText}
-              </a>
-            ) : (
-              <span>{resolvedFooterText}</span>
             )}
           </div>
-        )}
-      </div>
 
-      {error && <div className="nchatbot-error">{error}</div>}
+          <div className="nchatbot-input-area">
+            <div className="nchatbot-input-row">
+              <div className="nchatbot-input-icons">
+                <span className="nchatbot-icon" aria-hidden="true">
+                  <SmileIcon />
+                </span>
+                <button
+                  type="button"
+                  className="nchatbot-icon-btn"
+                  onClick={revealQuickActions}
+                  disabled={!resolvedQuickActions.length}
+                  aria-label="Show quick actions"
+                  title="Quick actions"
+                >
+                  <GridIcon />
+                </button>
+              </div>
+              <input
+                ref={inputRef}
+                className="nchatbot-input"
+                placeholder={placeholder}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="nchatbot-send"
+                onClick={() => sendMessage(input)}
+                disabled={loading || !input.trim()}
+                aria-label="Send message"
+              >
+                <SendIcon />
+              </button>
+            </div>
+            {resolvedFooterText && (
+              <div className="nchatbot-footer">
+                {footerLink ? (
+                  <a href={footerLink} target="_blank" rel="noreferrer noopener">
+                    {resolvedFooterText}
+                  </a>
+                ) : (
+                  <span>{resolvedFooterText}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {error && <div className="nchatbot-error">{error}</div>}
+          </>
+        )}
     </div>
     </>
   );
@@ -967,6 +1330,23 @@ const ChatBubbleIcon = () => (
 const CloseIcon = () => (
   <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
+const MinusIcon = () => (
+  <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M6 12h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg className="nchatbot-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M7.5 3.5l2.2 1.2c.6.3.9 1 .7 1.7l-.7 2.4c-.2.6 0 1.2.4 1.6l3.6 3.6c.4.4 1 .6 1.6.4l2.4-.7c.7-.2 1.4.1 1.7.7l1.2 2.2c.4.7.2 1.6-.5 2-1 .6-2.3 1.1-3.6 1.1-6.1 0-11-4.9-11-11 0-1.3.4-2.6 1.1-3.6.4-.7 1.3-.9 2-.5Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
