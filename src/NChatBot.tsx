@@ -77,6 +77,8 @@ type SourceDisplay = {
   url?: string;
 };
 
+const EMOJI_LIST = ['😀', '😁', '😂', '😊', '😍', '😇', '😉', '🙂', '😌', '🤔', '😎', '🥳', '😢', '😴', '🙏', '👍'];
+
 export interface NNChatBotProps {
   /** The API endpoint to call when a user submits a message (required) */
   apiEndpoint: string;
@@ -515,11 +517,13 @@ const NChatBot: React.FC<NNChatBotProps> = ({
   const liveChatHistoryLoadingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const liveContainerRef = useRef<HTMLDivElement | null>(null);
+  const emojiWrapRef = useRef<HTMLDivElement | null>(null);
   const [liveChatMode, setLiveChatMode] = useState<boolean>(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState<boolean>(
     () => !hideQuickActionsAfterSend || !messages.some((m) => m.from === 'user')
   );
   const [quickActionsManuallyOpened, setQuickActionsManuallyOpened] = useState<boolean>(false);
+  const [emojiOpen, setEmojiOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const stored = loadChatFromStorage();
@@ -1436,6 +1440,49 @@ const NChatBot: React.FC<NNChatBotProps> = ({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!emojiOpen) return;
+    const handlePointer = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (emojiWrapRef.current && target && !emojiWrapRef.current.contains(target)) {
+        setEmojiOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointer);
+    document.addEventListener('touchstart', handlePointer);
+    return () => {
+      document.removeEventListener('mousedown', handlePointer);
+      document.removeEventListener('touchstart', handlePointer);
+    };
+  }, [emojiOpen]);
+
+  useEffect(() => {
+    if (!open || liveChatMode) {
+      setEmojiOpen(false);
+    }
+  }, [open, liveChatMode]);
+
+  const handleEmojiSelect = (emoji: string) => {
+    const inputEl = inputRef.current;
+    if (!inputEl) {
+      setInput((prev) => `${prev}${emoji}`);
+      setEmojiOpen(false);
+      return;
+    }
+
+    const value = inputEl.value;
+    const start = inputEl.selectionStart ?? value.length;
+    const end = inputEl.selectionEnd ?? value.length;
+    const nextValue = `${value.slice(0, start)}${emoji}${value.slice(end)}`;
+    setInput(nextValue);
+    setEmojiOpen(false);
+    requestAnimationFrame(() => {
+      inputEl.focus();
+      const nextPos = start + emoji.length;
+      inputEl.setSelectionRange(nextPos, nextPos);
+    });
+  };
+
 
 
   // Add stickyFooter or floating class when requested
@@ -1753,9 +1800,35 @@ const NChatBot: React.FC<NNChatBotProps> = ({
           <div className="nchatbot-input-area">
             <div className="nchatbot-input-row">
               <div className="nchatbot-input-icons">
-                <span className="nchatbot-icon" aria-hidden="true">
-                  <SmileIcon />
-                </span>
+                <div className="nchatbot-emoji-wrap" ref={emojiWrapRef}>
+                  <button
+                    type="button"
+                    className={`nchatbot-icon-btn ${emojiOpen ? 'is-active' : ''}`}
+                    onClick={() => setEmojiOpen((prev) => !prev)}
+                    aria-label="Insert emoji"
+                    aria-haspopup="dialog"
+                    aria-expanded={emojiOpen}
+                  >
+                    <SmileIcon />
+                  </button>
+                  {emojiOpen && (
+                    <div className="nchatbot-emoji-pop" role="dialog" aria-label="Emoji picker">
+                      <div className="nchatbot-emoji-grid">
+                        {EMOJI_LIST.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            className="nchatbot-emoji-item"
+                            onClick={() => handleEmojiSelect(emoji)}
+                            aria-label={`Insert ${emoji}`}
+                          >
+                            <span aria-hidden="true">{emoji}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button
                   type="button"
                   className="nchatbot-icon-btn"
